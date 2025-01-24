@@ -1,21 +1,33 @@
 import * as vscode from "vscode";
 
+const globals = {
+  generalBgOpacity: "0.08",
+  firstLastBgOpacity: "0.2",
+};
+
 export function createBlockHighlight(
   color: string
 ): vscode.TextEditorDecorationType {
   return vscode.window.createTextEditorDecorationType({
-    backgroundColor: color,
+    backgroundColor: `hsla(${color}, ${globals.generalBgOpacity})`,
     isWholeLine: true,
   });
 }
 
-export function createBlockBorder(
+export function createFirstLineHighlight(
   color: string
 ): vscode.TextEditorDecorationType {
   return vscode.window.createTextEditorDecorationType({
-    border: `1px solid ${color}`,
-    borderRadius: "4px",
-    backgroundColor: "transparent",
+    backgroundColor: `hsla(${color}, ${globals.firstLastBgOpacity})`,
+    isWholeLine: true,
+  });
+}
+
+export function createLastLineHighlight(
+  color: string
+): vscode.TextEditorDecorationType {
+  return vscode.window.createTextEditorDecorationType({
+    backgroundColor: `hsla(${color}, ${globals.firstLastBgOpacity})`,
     isWholeLine: true,
   });
 }

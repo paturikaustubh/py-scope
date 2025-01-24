@@ -1,142 +1,113 @@
+// src/pythonParser.ts
 import * as vscode from "vscode";
-
-interface BlockContext {
-  startLine: number;
-  startCol: number;
-  indentLevel: number;
-  type: "def" | "class" | "flow";
-}
 
 export interface CodeBlock {
   openRange: vscode.Range;
   closeRange: vscode.Range;
-  type: "def" | "class" | "flow";
 }
+
+interface BlockStackItem {
+  indent: number;
+  startLine: number;
+  colonPosition: number;
+}
+
+const BLOCK_KEYWORDS = [
+  "def",
+  "class",
+  "if",
+  "elif",
+  "else",
+  "for",
+  "while",
+  "try",
+  "except",
+  "finally",
+  "with",
+];
 
 export function parsePythonBlocks(document: vscode.TextDocument): CodeBlock[] {
   const blocks: CodeBlock[] = [];
-  const blockStack: BlockContext[] = [];
-  let currentIndent = -1;
-  let pendingColon = false;
-  let lineContinuation = false;
+  const stack: BlockStackItem[] = [];
 
   for (let lineNum = 0; lineNum < document.lineCount; lineNum++) {
     const line = document.lineAt(lineNum);
-    if (line.isEmptyOrWhitespace && !pendingColon) {
+    if (line.isEmptyOrWhitespace) {
       continue;
     }
 
-    const text = line.text;
-    const lineIndent = line.firstNonWhitespaceCharacterIndex;
-    const trimmed = text.trim();
+    const currentIndent = line.firstNonWhitespaceCharacterIndex;
+    const lineText = line.text.trim();
 
-    // Handle line continuation characters
-    lineContinuation =
-      text.endsWith("\\") ||
-      (text.match(/[(\[{]/g) || []).length >
-        (text.match(/[)\]}]/g) || []).length;
-
-    // Detect block starters
-    if (!lineContinuation && !pendingColon) {
-      const firstWord = trimmed.split(/\s+/)[0];
-      if (
-        [
-          "def",
-          "class",
-          "if",
-          "elif",
-          "else",
-          "for",
-          "while",
-          "try",
-          "except",
-          "finally",
-          "with",
-        ].includes(firstWord)
-      ) {
-        pendingColon = true;
-      }
+    // Check if current line closes any open blocks
+    while (
+      stack.length > 0 &&
+      currentIndent <= stack[stack.length - 1].indent
+    ) {
+      const closedBlock = stack.pop()!;
+      const endLine = lineNum - 1;
+      blocks.push(createBlock(document, closedBlock, endLine));
     }
 
-    // Find actual colon position
-    if (pendingColon || lineContinuation) {
-      const colonIndex = text.indexOf(
-        ":",
-        line.firstNonWhitespaceCharacterIndex
-      );
-      if (colonIndex > -1 && !isInsideBrackets(text, colonIndex)) {
-        pendingColon = false;
-        lineContinuation = false;
-
-        // Calculate true indentation level
-        const trueIndent =
-          text.slice(0, colonIndex).match(/^\s*/)?.[0].length || 0;
-
-        // Close parent blocks if needed
-        while (
-          blockStack.length > 0 &&
-          trueIndent <= blockStack[blockStack.length - 1].indentLevel
-        ) {
-          const closedBlock = blockStack.pop()!;
-          blocks.push(createBlock(document, closedBlock, lineNum - 1));
-        }
-
-        // Push new block context
-        blockStack.push({
-          startLine: lineNum,
-          startCol: colonIndex + 1,
-          indentLevel: trueIndent,
-          type:
-            trimmed.startsWith("def") || trimmed.startsWith("class")
-              ? (trimmed.split(" ")[0] as "def" | "class")
-              : "flow",
-        });
+    // Check if current line starts a new block
+    if (isBlockStart(lineText)) {
+      const colonIndex = line.text.indexOf(":");
+      if (colonIndex === -1) {
+        continue;
       }
-    }
 
-    // Update current indent tracking
-    if (!lineContinuation) {
-      currentIndent = lineIndent;
+      stack.push({
+        indent: currentIndent,
+        startLine: lineNum,
+        colonPosition: colonIndex + 1,
+      });
     }
   }
 
-  // Close remaining blocks
-  while (blockStack.length > 0) {
-    const block = blockStack.pop()!;
-    blocks.push(createBlock(document, block, document.lineCount - 1));
+  // Close any remaining open blocks at end of file
+  while (stack.length > 0) {
+    const closedBlock = stack.pop()!;
+    const endLine = document.lineCount - 1;
+    blocks.push(createBlock(document, closedBlock, endLine));
   }
 
   return blocks;
 }
 
-function isInsideBrackets(text: string, index: number): boolean {
-  const before = text.slice(0, index);
-  const parenBalance =
-    (before.match(/\(/g) || []).length - (before.match(/\)/g) || []).length;
-  const braceBalance =
-    (before.match(/\{/g) || []).length - (before.match(/\}/g) || []).length;
-  const bracketBalance =
-    (before.match(/\[/g) || []).length - (before.match(/\]/g) || []).length;
-
-  return parenBalance > 0 || braceBalance > 0 || bracketBalance > 0;
+function isBlockStart(lineText: string): boolean {
+  return BLOCK_KEYWORDS.some((keyword) =>
+    new RegExp(`^\\s*${keyword}\\b.*:\\s*$`).test(lineText)
+  );
 }
 
 function createBlock(
   document: vscode.TextDocument,
-  block: BlockContext,
+  block: BlockStackItem,
   endLine: number
 ): CodeBlock {
-  const endLineText = document.lineAt(endLine).text;
-  const endChar = endLineText.length;
+  // Adjust endLine to last non-empty line in block
+  let lastContentLine = endLine;
+  while (lastContentLine > block.startLine) {
+    const line = document.lineAt(lastContentLine);
+    if (!line.isEmptyOrWhitespace) {
+      break;
+    }
+    lastContentLine--;
+  }
 
+  const line = document.lineAt(lastContentLine);
   return {
     openRange: new vscode.Range(
       block.startLine,
-      block.startCol,
+      block.colonPosition,
       block.startLine,
-      block.startCol
+      block.colonPosition
     ),
-    closeRange: new vscode.Range(endLine, endChar, endLine, endChar),
-    type: block.type,
+    closeRange: new vscode.Range(
+      lastContentLine,
+      line.text.length,
+      lastContentLine,
+      line.text.length
+    ),
   };
 }
