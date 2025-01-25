@@ -6,7 +6,7 @@ import {
   createLastLineHighlight,
 } from "./config/styles";
 
-const CONFIG_SECTION = "pyBraces";
+const CONFIG_SECTION = "pyScope";
 const DEFAULT_COLOR = "0, 0%, 31%";
 const ACTIVE_COLOR = "111, 100%, 31%";
 const HIGHLIGHT_COLOR = "111, 94%, 31%";
@@ -31,7 +31,7 @@ function debounce<T extends (...args: any[]) => void>(fn: T, delay: number): T {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log("PyBraces extension activated");
+  console.log("PyScope extension activated");
 
   state = {
     highlightDecoration: createBlockHighlight(HIGHLIGHT_COLOR),
@@ -74,14 +74,18 @@ export function activate(context: vscode.ExtensionContext) {
     editor.setDecorations(state.lastLineHighlight, []);
 
     if (activeBlock) {
-      // Highlight block body
-      const highlightRange = new vscode.Range(
-        activeBlock.openRange.start.line + 1, // Start after first line
-        0,
-        activeBlock.closeRange.end.line - 1, // End before last line
-        Number.MAX_SAFE_INTEGER
-      );
-      editor.setDecorations(state.highlightDecoration, [highlightRange]);
+      const startLine = activeBlock.openRange.start.line;
+      const endLine = activeBlock.closeRange.end.line;
+
+      // Highlight block body (lines after opener up to and including closer)
+      let highlightRanges: vscode.Range[] = [];
+      if (startLine < endLine) {
+        highlightRanges.push(
+          new vscode.Range(startLine + 1, 0, endLine, Number.MAX_SAFE_INTEGER)
+        );
+      }
+
+      editor.setDecorations(state.highlightDecoration, highlightRanges);
 
       // Highlight first line
       const firstLineRange = new vscode.Range(
@@ -158,7 +162,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-  console.log("PyBraces extension deactivated");
+  console.log("PyScope extension deactivated");
   if (state) {
     state.disposables.forEach((d) => d.dispose());
     state.highlightDecoration.dispose();

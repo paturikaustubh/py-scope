@@ -1,9 +1,10 @@
 {
   "name": "py-scope",
   "displayName": "PyScope - Python Code Block Highlighter",
-  "description": "Enhance Python code readability with visual block highlighting. Perfect for developers who want to visualize code scope and indentation.",
-  "version": "0.0.1",
-  "publisher": "Kaustubh Paturi",
+  "description": "Enhance Python code readability with dynamic block highlighting. Perfect for visualizing code structure and improving developer productivity.",
+  "logo": "./images/logo.png",
+  "version": "0.0.2",
+  "publisher": "KaustubhPaturi",
   "engines": {
     "vscode": "^1.96.0"
   },
@@ -23,7 +24,8 @@
     "developer tools",
     "python indentation",
     "python block",
-    "code highlighting"
+    "code highlighting",
+    "scope visualization"
   ],
   "activationEvents": [
     "onLanguage:python"
@@ -69,7 +71,6 @@
     "url": "https://github.com/pasturikaustubh/py-scope/issues"
   },
   "homepage": "https://github.com/pasturikaustubh/py-scope#readme",
-  "icon": "images/icon.png",
   "license": "MIT",
   "dependencies": {
     "py-scope": "file:"
