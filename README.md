@@ -2,8 +2,8 @@
 
 ---
 
-**Tired of losing track of your Python code blocks?**  
-**Struggling to see where that `if` statement ends or where your `def` begins?**  
+**Tired of losing track of your Python code blocks?**
+**Struggling to see where that `if` statement ends or where your `def` begins?**
 **Say hello to PyScope!** 🚀
 
 ---
@@ -79,15 +79,14 @@ def my_function():
 
 ### After PyScope
 
-![Highlighted Code Blocks](https://example.com/pyscope-demo.gif)  
+![Highlighted Code Blocks](https://example.com/pyscope-demo.gif)
 _(Imagine beautiful highlights here!)_
 
 ---
 
 ## Support & Feedback 💬
 
-Love PyScope? Hate it? Found a bug?  
-Let me know!
+Love PyScope? Hate it? Found a bug?Let me know!
 
 - **GitHub Issues**: [Report an Issue](https://github.com/pasturikaustubh/py-scope/issues)
 - **Feature Requests**: [Suggest a Feature](https://github.com/pasturikaustubh/py-scope/discussions)
@@ -97,21 +96,21 @@ Let me know!
 
 ## Contributing 🤝
 
-Want to make PyScope even better? Contributions are welcome!  
+Want to make PyScope even better? Contributions are welcome!
 Check out the [Contributing Guide](https://github.com/pasturikaustubh/py-scope/blob/main/CONTRIBUTING.md) to get started.
 
 ---
 
 ## License 📜
 
-PyScope is open-source and licensed under the **MIT License**.  
+PyScope is open-source and licensed under the **MIT License**.
 Do whatever you want with it (just give credit where it’s due)! 😄
 
 ---
 
-## Made with ❤️ by [Your Name]
+## Made with ❤️ by Kaustubh Paturi
 
-Coding should be fun, and PyScope is here to make it even more enjoyable.  
+Coding should be fun, and PyScope is here to make it even more enjoyable.
 Happy coding! 🎉🐍
 
 ---
