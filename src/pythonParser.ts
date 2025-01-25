@@ -1,4 +1,3 @@
-// src/pythonParser.ts
 import * as vscode from "vscode";
 
 export interface CodeBlock {
@@ -75,8 +74,14 @@ export function parsePythonBlocks(document: vscode.TextDocument): CodeBlock[] {
 }
 
 function isBlockStart(lineText: string): boolean {
+  // Split line into code and comment parts
+  const codePart = lineText.split(/#.*/)[0].trim();
+  if (!codePart.endsWith(":")) {
+    return false;
+  }
+  // Check if the code part starts with a block keyword
   return BLOCK_KEYWORDS.some((keyword) =>
-    new RegExp(`^\\s*${keyword}\\b.*:\\s*$`).test(lineText)
+    new RegExp(`^\\s*${keyword}\\b`).test(codePart)
   );
 }
 
