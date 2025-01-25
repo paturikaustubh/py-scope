@@ -9,8 +9,10 @@ export function createBlockHighlight(
   color: string
 ): vscode.TextEditorDecorationType {
   return vscode.window.createTextEditorDecorationType({
-    backgroundColor: `hsla(${color}, ${globals.generalBgOpacity})`,
+    backgroundColor: `rgba(${color}, ${globals.generalBgOpacity})`,
     isWholeLine: true,
+    overviewRulerColor: `rgb(${color})`,
+    overviewRulerLane: vscode.OverviewRulerLane.Full,
   });
 }
 
@@ -18,8 +20,10 @@ export function createFirstLineHighlight(
   color: string
 ): vscode.TextEditorDecorationType {
   return vscode.window.createTextEditorDecorationType({
-    backgroundColor: `hsla(${color}, ${globals.firstLastBgOpacity})`,
+    backgroundColor: `rgba(${color}, ${globals.firstLastBgOpacity})`,
     isWholeLine: true,
+    overviewRulerColor: `rgb(${color})`,
+    overviewRulerLane: vscode.OverviewRulerLane.Full,
   });
 }
 
@@ -27,7 +31,9 @@ export function createLastLineHighlight(
   color: string
 ): vscode.TextEditorDecorationType {
   return vscode.window.createTextEditorDecorationType({
-    backgroundColor: `hsla(${color}, ${globals.firstLastBgOpacity})`,
+    backgroundColor: `rgba(${color}, ${globals.firstLastBgOpacity})`,
     isWholeLine: true,
+    overviewRulerColor: `rgb(${color})`,
+    overviewRulerLane: vscode.OverviewRulerLane.Full,
   });
 }

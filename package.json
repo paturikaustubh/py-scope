@@ -33,8 +33,22 @@
   "main": "./dist/extension.js",
   "contributes": {
     "configuration": {
-      "title": "PyScope"
-    }
+      "title": "PyScope",
+      "properties": {
+        "pyScope.blockHighlightColor": {
+          "type": "string",
+          "default": "27, 153, 5",
+          "description": "RGB color values for highlighting Python code blocks."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "pyScope.changeColor",
+        "title": "Change PyScope Highlight Color",
+        "category": "PyScope"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
