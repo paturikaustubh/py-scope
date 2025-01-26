@@ -116,4 +116,4 @@ g
 
 **P.S.** If you love PyScope, share it with your friends and spread the word! 🌍✨
 
-# \***\*_Nothing great ever came that easy_\*\***
+# ***__Nothing great ever came that easy__***
