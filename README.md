@@ -1,7 +1,5 @@
 # PyScope - Python Code Block Highlighter 🎨🐍
 
----
-
 **Tired of losing track of your Python code blocks?**
 **Struggling to see where that `if` statement ends or where your `def` begins?**
 **Say hello to PyScope!** 🚀
@@ -11,6 +9,8 @@
 ## What is PyScope? 🤔
 
 PyScope is your new best friend for writing Python code in VS Code. It **highlights code blocks** (like functions, loops, and conditionals) with beautiful background colors, making it super easy to see where each block starts and ends. No more squinting at indentation! 👀
+
+![PyScope Walkthru](./images/samples/walk-thru.gif)
 
 ---
 
@@ -56,31 +56,27 @@ It’s like having **X-ray vision** for your Python code! 👓
 
 ## Configuration ⚙️
 
-Customize PyScope to fit your style! Add this to your VS Code `settings.json`:
+Customize PyScope to fit your style!
+You can change the color of the highlighted blocksby providing RGB values of the color you like. You can do this from the settings
+
+### How to change in the settings
+
+1. Open settings `Ctrl+Comma` for windows, `Cmd+Comma` for mac
+2. Search for `pyScope` and look for `Block Highlight Color`
+3. Provide you desired RGB value in that field
+4. You can leave the field blank to use the default color
+
+![Change color from settings](./images/samples/settings-color-change.gif)
+
+Or open `settings.json` and look for `pyScope.blockHighlightColor` and you can configure the color there too.
 
 ```json
-"pyScope.blockHighlightColor": "111, 94%, 31%",
-"pyScope.blockHighlightOpacity": "0.08"
+"pyScope.blockHighlightColor": "27, 153, 5",
 ```
 
----
+or by using the command `pyScope.changeColor`.
 
-## Examples 🖼️
-
-### Before PyScope
-
-```py
-def my_function():
-    if x > 10:
-        print("x is big")
-    else:
-        print("x is small")
-```
-
-### After PyScope
-
-![Highlighted Code Blocks](https://example.com/pyscope-demo.gif)
-_(Imagine beautiful highlights here!)_
+![Change color using command](./images/samples/cmd-color-change.gif)
 
 ---
 
@@ -97,7 +93,8 @@ Love PyScope? Hate it? Found a bug?Let me know!
 ## Contributing 🤝
 
 Want to make PyScope even better? Contributions are welcome!
-Check out the [Contributing Guide](https://github.com/pasturikaustubh/py-scope/blob/main/CONTRIBUTING.md) to get started.
+Feel free to fork the repo, make the changes and raise a PR! We'll discuss the changes
+[Fork Repository](https://github.com/paturikaustubh/py-scope/fork)
 
 ---
 
@@ -116,3 +113,5 @@ Happy coding! 🎉🐍
 ---
 
 **P.S.** If you love PyScope, share it with your friends and spread the word! 🌍✨
+
+# \***\*_Nothing great ever came that easy_\*\***
