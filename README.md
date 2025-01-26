@@ -110,6 +110,8 @@ Do whatever you want with it (just give credit where it’s due)! 😄
 Coding should be fun, and PyScope is here to make it even more enjoyable.
 Happy coding! 🎉🐍
 
+g
+
 ---
 
 **P.S.** If you love PyScope, share it with your friends and spread the word! 🌍✨
