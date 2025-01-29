@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 export interface CodeBlock {
   openRange: vscode.Range;
   closeRange: vscode.Range;
+  childBlocks?: { firstLine: number; lastLine: number }[];
 }
 
 interface BlockStackItem {

@@ -6,11 +6,21 @@ All notable changes to the "py-scope" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## v0.3.0 - 29 Jan, 2025
+
+### Changed
+
+- Optimized logic for re-rendering/re-hghlighting the block
+
+---
+
 ## v0.2.2 - 26 Jan, 2025
 
 ### Changed
 
-- Updated preview GIFsg
+- Updated preview GIFs
+
+---
 
 ## v0.2.1 - 26 Jan, 2025
 

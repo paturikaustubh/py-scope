@@ -84,9 +84,9 @@ or by using the command `pyScope.changeColor`.
 
 Love PyScope? Hate it? Found a bug?Let me know!
 
-- **GitHub Issues**: [Report an Issue](https://github.com/pasturikaustubh/py-scope/issues)
-- **Feature Requests**: [Suggest a Feature](https://github.com/pasturikaustubh/py-scope/discussions)
-- **Star the Repo**: [GitHub Repo](https://github.com/pasturikaustubh/py-scope) ⭐
+- **GitHub Issues**: [Report an Issue](https://github.com/paturikaustubh/py-scope/issues)
+- **Feature Requests**: [Suggest a Feature](https://github.com/paturikaustubh/py-scope/discussions)
+- **Star the Repo**: [GitHub Repo](https://github.com/paturikaustubh/py-scope) ⭐
 
 ---
 
@@ -110,10 +110,8 @@ Do whatever you want with it (just give credit where it’s due)! 😄
 Coding should be fun, and PyScope is here to make it even more enjoyable.
 Happy coding! 🎉🐍
 
-g
-
 ---
 
 **P.S.** If you love PyScope, share it with your friends and spread the word! 🌍✨
 
-# ***__Nothing great ever came that easy__***
+# **_**Nothing great ever came that easy**_**
