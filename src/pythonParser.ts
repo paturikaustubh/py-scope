@@ -24,6 +24,8 @@ const BLOCK_KEYWORDS = [
   "except",
   "finally",
   "with",
+  "match",
+  "case",
 ];
 
 export function parsePythonBlocks(document: vscode.TextDocument): CodeBlock[] {
