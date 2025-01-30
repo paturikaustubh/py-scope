@@ -6,6 +6,12 @@ All notable changes to the "py-scope" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## v0.3.1 - 30 Jan, 2025
+
+### Changed
+
+- Included match (switch) and case for block keywords
+
 ## v0.3.0 - 29 Jan, 2025
 
 ### Changed
