@@ -15,6 +15,7 @@ interface ExtensionState {
   lastLineHighlight: vscode.TextEditorDecorationType;
   disposables: vscode.Disposable[];
 }
+
 interface BlockMetadata {
   firstLine: number;
   lastLine: number;
@@ -64,15 +65,111 @@ function disposeDecorations(state: ExtensionState | undefined) {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log("PyScope", "PyScope extension activated");
+  console.log("PyScope extension activated");
+
+  // Initialize decorations
   state = createDecorations();
 
+  // --- Color Change Command ---
+  const changeColorCommand = vscode.commands.registerCommand(
+    "pyScope.changeColor",
+    async () => {
+      interface ColorOption extends vscode.QuickPickItem {
+        value: string;
+      }
+
+      const colorOptions: ColorOption[] = [
+        { label: "Default", value: "27, 153, 5" },
+        { label: "Red", value: "255, 69, 69" },
+        { label: "Yellow", value: "243, 255, 69" },
+        { label: "Blue", value: "69, 69, 255" },
+        { label: "Custom...", value: "custom" },
+      ];
+
+      const selectedColor = await vscode.window.showQuickPick(colorOptions, {
+        placeHolder: "Select a color or choose Custom...",
+      });
+
+      if (selectedColor) {
+        let newColor = selectedColor.value;
+
+        if (newColor === "custom") {
+          const customColor = await vscode.window.showInputBox({
+            prompt:
+              "Enter RGB color (e.g., 255,0,0) or leave empty for default",
+            placeHolder: "27, 153, 5",
+            validateInput: (input) => {
+              if (!input || input.trim() === "") {
+                return null; // Allow empty input for fallback
+              }
+              const parts = input.split(",");
+              if (parts.length !== 3) {
+                return "Invalid format. Use R,G,B (e.g., 255,0,0).";
+              }
+              for (const part of parts) {
+                const num = parseInt(part.trim(), 10);
+                if (isNaN(num) || num < 0 || num > 255) {
+                  return "Each value must be between 0 and 255.";
+                }
+              }
+              return null; // No error
+            },
+          });
+
+          if (customColor === undefined || customColor.trim() === "") {
+            newColor = "27, 153, 5"; // Fallback to default color
+          } else {
+            newColor = customColor;
+          }
+        }
+
+        const config = vscode.workspace.getConfiguration(CONFIG_SECTION);
+        await config.update(
+          "blockHighlightColor",
+          newColor,
+          vscode.ConfigurationTarget.Global
+        );
+
+        vscode.window.showInformationMessage(
+          `PyScope highlight color updated to: ${newColor}`
+        );
+
+        // Force immediate re-highlighting after color change
+        // Reset cached block data so that handleCursorMove will update decorations
+        currentBlockData = undefined;
+        if (vscode.window.activeTextEditor) {
+          updateAllDecorations();
+        }
+      }
+    }
+  );
+  context.subscriptions.push(changeColorCommand);
+
+  // --- Configuration Change Listener ---
+  const configListener = vscode.workspace.onDidChangeConfiguration((e) => {
+    if (e.affectsConfiguration(CONFIG_SECTION)) {
+      console.log("Configuration changed - updating decorations");
+      // Dispose old decorations and reset cached block data
+      disposeDecorations(state);
+      currentBlockData = undefined;
+      previousIndentation = undefined;
+      // Create new decorations with updated settings
+      state = createDecorations();
+      // Force immediate update
+      updateAllDecorations();
+    }
+  });
+  state.disposables.push(configListener);
+
+  // --- Update and Highlight Logic ---
   const updateAllDecorations = () => {
     const editor = vscode.window.activeTextEditor;
     if (!editor || editor.document.languageId !== "python") return;
     try {
+      // (Re)parse blocks and re-highlight the current block.
       parsePythonBlocks(editor.document);
-      handleCursorMove(editor);
+      // Always re-highlight the current block.
+      highlightBlock(editor, editor.selection.active.line);
     } catch (error) {
       console.error("Error updating decorations:", error);
     }
@@ -191,22 +288,24 @@ export function activate(context: vscode.ExtensionContext) {
     return document.lineAt(line).text.search(/\S|$/);
   }
 
-  state.disposables = [
+  // --- Event Listeners ---
+  state.disposables.push(
     vscode.workspace.onDidChangeTextDocument(
       debounce(updateAllDecorations, DEBOUNCE_DELAY)
     ),
     vscode.window.onDidChangeTextEditorSelection(
       debounce((e) => handleCursorMove(e.textEditor), DEBOUNCE_DELAY)
     ),
-    vscode.window.onDidChangeActiveTextEditor(updateAllDecorations),
-  ];
+    vscode.window.onDidChangeActiveTextEditor(updateAllDecorations)
+  );
 
+  // Initial update of decorations
   updateAllDecorations();
   context.subscriptions.push(new vscode.Disposable(() => deactivate()));
 }
 
 export function deactivate() {
-  console.log("PyScope", "PyScope extension deactivated");
+  console.log("PyScope extension deactivated");
   disposeDecorations(state);
   state = undefined;
 }
