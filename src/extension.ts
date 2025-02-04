@@ -40,6 +40,8 @@ function debounce<T extends (...args: any[]) => void>(fn: T, delay: number): T {
 function createDecorations(): ExtensionState {
   const config = vscode.workspace.getConfiguration(CONFIG_SECTION);
   let highlightColor = config.get<string>("blockHighlightColor", "27, 153, 5");
+  let blockOpacity = config.get<number>("blockHighlightOpacity", 0.08);
+  let firstLastOpacity = config.get<number>("firstLastLineOpacity", 0.2);
 
   if (!highlightColor || highlightColor.trim() === "") {
     highlightColor = "27, 153, 5";
@@ -48,10 +50,30 @@ function createDecorations(): ExtensionState {
     );
   }
 
+  // Validate opacity values (must be > 0 and ≤ 1)
+  if (blockOpacity <= 0 || blockOpacity > 1) {
+    blockOpacity = 0.08;
+    vscode.window.showWarningMessage(
+      "Invalid block highlight opacity provided. Using default opacity."
+    );
+  }
+  if (firstLastOpacity <= 0 || firstLastOpacity > 1) {
+    firstLastOpacity = 0.2;
+    vscode.window.showWarningMessage(
+      "Invalid first/last line opacity provided. Using default opacity."
+    );
+  }
+
   return {
-    highlightDecoration: createBlockHighlight(highlightColor),
-    firstLineHighlight: createFirstLineHighlight(highlightColor),
-    lastLineHighlight: createLastLineHighlight(highlightColor),
+    highlightDecoration: createBlockHighlight(highlightColor, blockOpacity),
+    firstLineHighlight: createFirstLineHighlight(
+      highlightColor,
+      firstLastOpacity
+    ),
+    lastLineHighlight: createLastLineHighlight(
+      highlightColor,
+      firstLastOpacity
+    ),
     disposables: [],
   };
 }
@@ -125,7 +147,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         const config = vscode.workspace.getConfiguration(CONFIG_SECTION);
         await config.update(
-          "blockHighlightColor",
+          "pyScope.blockHighlightColor",
           newColor,
           vscode.ConfigurationTarget.Global
         );
@@ -135,7 +157,6 @@ export function activate(context: vscode.ExtensionContext) {
         );
 
         // Force immediate re-highlighting after color change
-        // Reset cached block data so that handleCursorMove will update decorations
         currentBlockData = undefined;
         if (vscode.window.activeTextEditor) {
           updateAllDecorations();
@@ -144,6 +165,63 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
   context.subscriptions.push(changeColorCommand);
+
+  // --- Opacity Change Command ---
+  const changeOpacityCommand = vscode.commands.registerCommand(
+    "pyScope.changeOpacity",
+    async () => {
+      interface OpacityOption extends vscode.QuickPickItem {
+        key: string;
+      }
+
+      const opacityOptions: OpacityOption[] = [
+        { label: "Block Highlight Opacity", key: "blockHighlightOpacity" },
+        { label: "First and Last Line Opacity", key: "firstLastLineOpacity" },
+      ];
+
+      const selectedOption = await vscode.window.showQuickPick(opacityOptions, {
+        placeHolder: "Select the opacity setting to change",
+      });
+
+      if (selectedOption) {
+        const input = await vscode.window.showInputBox({
+          prompt: `Enter a number (0 < opacity ≤ 1) for ${selectedOption.label}`,
+          validateInput: (value: string) => {
+            const num = parseFloat(value);
+            if (isNaN(num) || num <= 0 || num > 1) {
+              return "Please enter a valid number between 0 (exclusive) and 1 (inclusive).";
+            }
+            return null;
+          },
+        });
+
+        if (input !== undefined) {
+          const numValue = parseFloat(input);
+          if (isNaN(numValue) || numValue <= 0 || numValue > 1) {
+            vscode.window.showErrorMessage(
+              "Invalid opacity value. Must be a number between 0 (exclusive) and 1 (inclusive)."
+            );
+            return;
+          }
+          const config = vscode.workspace.getConfiguration(CONFIG_SECTION);
+          await config.update(
+            `${selectedOption.key}`,
+            numValue,
+            vscode.ConfigurationTarget.Global
+          );
+          vscode.window.showInformationMessage(
+            `${selectedOption.label} updated to ${numValue}`
+          );
+          // Force immediate update
+          currentBlockData = undefined;
+          if (vscode.window.activeTextEditor) {
+            updateAllDecorations();
+          }
+        }
+      }
+    }
+  );
+  context.subscriptions.push(changeOpacityCommand);
 
   // --- Configuration Change Listener ---
   const configListener = vscode.workspace.onDidChangeConfiguration((e) => {
@@ -238,7 +316,7 @@ export function activate(context: vscode.ExtensionContext) {
     const highlightRange = new vscode.Range(
       firstLine + 1,
       0,
-      lastLine,
+      lastLine - 1,
       Number.MAX_SAFE_INTEGER
     );
     editor.setDecorations(state.highlightDecoration, [highlightRange]);

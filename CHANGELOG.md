@@ -6,6 +6,14 @@ All notable changes to the "py-scope" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## v0.4.0 - 05 Feb, 2025
+
+### Added
+
+- The user can now customize the opacity for both block highlight and first and last line highlights from settings and from commands
+
+---
+
 ## v0.3.2 - 05 Feb, 2025
 
 ### Fixed
