@@ -1,15 +1,11 @@
 import * as vscode from "vscode";
 
-const globals = {
-  generalBgOpacity: "0.08",
-  firstLastBgOpacity: "0.2",
-};
-
 export function createBlockHighlight(
-  color: string
+  color: string,
+  opacity: number
 ): vscode.TextEditorDecorationType {
   return vscode.window.createTextEditorDecorationType({
-    backgroundColor: `rgba(${color}, ${globals.generalBgOpacity})`,
+    backgroundColor: `rgba(${color}, ${opacity})`,
     isWholeLine: true,
     overviewRulerColor: `rgb(${color})`,
     overviewRulerLane: vscode.OverviewRulerLane.Full,
@@ -17,10 +13,11 @@ export function createBlockHighlight(
 }
 
 export function createFirstLineHighlight(
-  color: string
+  color: string,
+  opacity: number
 ): vscode.TextEditorDecorationType {
   return vscode.window.createTextEditorDecorationType({
-    backgroundColor: `rgba(${color}, ${globals.firstLastBgOpacity})`,
+    backgroundColor: `rgba(${color}, ${opacity})`,
     isWholeLine: true,
     overviewRulerColor: `rgb(${color})`,
     overviewRulerLane: vscode.OverviewRulerLane.Full,
@@ -28,10 +25,11 @@ export function createFirstLineHighlight(
 }
 
 export function createLastLineHighlight(
-  color: string
+  color: string,
+  opacity: number
 ): vscode.TextEditorDecorationType {
   return vscode.window.createTextEditorDecorationType({
-    backgroundColor: `rgba(${color}, ${globals.firstLastBgOpacity})`,
+    backgroundColor: `rgba(${color}, ${opacity})`,
     isWholeLine: true,
     overviewRulerColor: `rgb(${color})`,
     overviewRulerLane: vscode.OverviewRulerLane.Full,
