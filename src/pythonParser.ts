@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 export interface CodeBlock {
   openRange: vscode.Range;
   closeRange: vscode.Range;
+  childBlocks?: { firstLine: number; lastLine: number }[];
 }
 
 interface BlockStackItem {
@@ -23,6 +24,8 @@ const BLOCK_KEYWORDS = [
   "except",
   "finally",
   "with",
+  "match",
+  "case",
 ];
 
 export function parsePythonBlocks(document: vscode.TextDocument): CodeBlock[] {
