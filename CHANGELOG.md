@@ -4,6 +4,12 @@ All notable changes to the "py-scope" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## v0.4.2 - 05 Feb, 2025
+
+### Updated
+
+- Segregated code in various file for code readability and structure
+
 ## v0.4.1 - 05 Feb, 2025
 
 ### Added
