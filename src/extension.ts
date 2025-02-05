@@ -147,7 +147,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         const config = vscode.workspace.getConfiguration(CONFIG_SECTION);
         await config.update(
-          "pyScope.blockHighlightColor",
+          "blockHighlightColor",
           newColor,
           vscode.ConfigurationTarget.Global
         );
@@ -172,11 +172,20 @@ export function activate(context: vscode.ExtensionContext) {
     async () => {
       interface OpacityOption extends vscode.QuickPickItem {
         key: string;
+        defaultValue: number; // Add a default value for each option
       }
 
       const opacityOptions: OpacityOption[] = [
-        { label: "Block Highlight Opacity", key: "blockHighlightOpacity" },
-        { label: "First and Last Line Opacity", key: "firstLastLineOpacity" },
+        {
+          label: "Block Highlight Opacity",
+          key: "blockHighlightOpacity",
+          defaultValue: 0.08, // Default value for block highlight
+        },
+        {
+          label: "First and Last Line Opacity",
+          key: "firstLastLineOpacity",
+          defaultValue: 0.2, // Default value for first/last line
+        },
       ];
 
       const selectedOption = await vscode.window.showQuickPick(opacityOptions, {
@@ -185,8 +194,11 @@ export function activate(context: vscode.ExtensionContext) {
 
       if (selectedOption) {
         const input = await vscode.window.showInputBox({
-          prompt: `Enter a number (0 < opacity ≤ 1) for ${selectedOption.label}`,
+          prompt: `Enter a number (0 < opacity ≤ 1) for ${selectedOption.label}. Leave empty to use default (${selectedOption.defaultValue}).`,
           validateInput: (value: string) => {
+            if (value.trim() === "") {
+              return null; // Allow empty input for fallback
+            }
             const num = parseFloat(value);
             if (isNaN(num) || num <= 0 || num > 1) {
               return "Please enter a valid number between 0 (exclusive) and 1 (inclusive).";
@@ -196,13 +208,20 @@ export function activate(context: vscode.ExtensionContext) {
         });
 
         if (input !== undefined) {
-          const numValue = parseFloat(input);
-          if (isNaN(numValue) || numValue <= 0 || numValue > 1) {
-            vscode.window.showErrorMessage(
-              "Invalid opacity value. Must be a number between 0 (exclusive) and 1 (inclusive)."
-            );
-            return;
+          let numValue: number;
+          if (input.trim() === "") {
+            // Fallback to default value if input is empty
+            numValue = selectedOption.defaultValue;
+          } else {
+            numValue = parseFloat(input);
+            if (isNaN(numValue) || numValue <= 0 || numValue > 1) {
+              vscode.window.showErrorMessage(
+                "Invalid opacity value. Must be a number between 0 (exclusive) and 1 (inclusive)."
+              );
+              return;
+            }
           }
+
           const config = vscode.workspace.getConfiguration(CONFIG_SECTION);
           await config.update(
             `${selectedOption.key}`,
@@ -212,6 +231,7 @@ export function activate(context: vscode.ExtensionContext) {
           vscode.window.showInformationMessage(
             `${selectedOption.label} updated to ${numValue}`
           );
+
           // Force immediate update
           currentBlockData = undefined;
           if (vscode.window.activeTextEditor) {
