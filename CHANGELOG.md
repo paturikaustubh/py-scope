@@ -4,6 +4,14 @@ All notable changes to the "py-scope" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## v0.5.1 - 17 Feb, 2025
+
+### Fixed
+
+- Block range identification logic handling indentation between pair of `"""` or `'''`
+
+---
+
 ## v0.5.0 - 13 Feb, 2025
 
 ### Fixed
