@@ -3,7 +3,7 @@
   "displayName": "PyScope - Python Code Block Highlighter",
   "description": "Enhance Python code readability with dynamic block highlighting. Perfect for visualizing code structure and improving developer productivity.",
   "icon": "images/logo.png",
-  "version": "0.4.2",
+  "version": "0.5.1",
   "publisher": "KaustubhPaturi",
   "engines": {
     "vscode": "^1.96.0"
@@ -66,6 +66,19 @@
         "command": "pyScope.changeOpacity",
         "title": "Change PyScope Highlight Opacity",
         "category": "PyScope"
+      },
+      {
+        "command": "pyScope.selectBlock",
+        "title": "Select Block",
+        "category": "PyScope"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "pyScope.selectBlock",
+        "key": "ctrl+alt+a",
+        "mac": "cmd+alt+a",
+        "when": "editorTextFocus"
       }
     ]
   },

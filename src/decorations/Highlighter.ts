@@ -76,7 +76,9 @@ export class Highlighter {
 
   public updateDecorations() {
     const editor = vscode.window.activeTextEditor;
-    if (!editor || editor.document.languageId !== "python") return;
+    if (!editor || editor.document.languageId !== "python") {
+      return;
+    }
     try {
       // Parse blocks and highlight based on the current cursor line.
       parsePythonBlocks(editor.document);
@@ -87,7 +89,9 @@ export class Highlighter {
   }
 
   public handleCursorMove(editor: vscode.TextEditor) {
-    if (!editor) return;
+    if (!editor) {
+      return;
+    }
     const currentLine = editor.selection.active.line;
     const currentIndentation = getLineIndentation(editor.document, currentLine);
 
@@ -117,16 +121,18 @@ export class Highlighter {
     const activeBlock = this.findInnerMostBlock(blocks, currentLine);
 
     if (activeBlock) {
-      const adjustedLastLine = activeBlock.closeRange.end.line;
+      const blockEndLine = activeBlock.closeRange.end.line;
+      // Use headerEndLine (from the parser) for the header decoration.
       this.highlightRange(
         editor,
-        activeBlock.openRange.start.line,
-        adjustedLastLine
+        activeBlock.openRange.start.line, // header start (e.g., the "def" line)
+        activeBlock.headerEndLine, // header end (line with the colon)
+        blockEndLine // block end (last content line)
       );
 
       this.currentBlockData = {
         firstLine: activeBlock.openRange.start.line,
-        lastLine: adjustedLastLine,
+        lastLine: blockEndLine,
         childBlocks: this.getChildBlocks(blocks, activeBlock),
       };
     } else {
@@ -137,24 +143,50 @@ export class Highlighter {
     }
   }
 
+  /**
+   * Highlights the header and the block body separately.
+   *
+   * @param editor The active text editor.
+   * @param headerStart The starting line of the header.
+   * @param headerEnd The ending line of the header (line with the colon).
+   * @param blockEnd The last line of the block.
+   */
   private highlightRange(
     editor: vscode.TextEditor,
-    firstLine: number,
-    lastLine: number
+    headerStart: number,
+    headerEnd: number,
+    blockEnd: number
   ) {
-    const highlightRange = new vscode.Range(
-      firstLine + 1,
+    // Highlight the block body (if any) with lower opacity.
+    if (headerEnd + 1 <= blockEnd - 1) {
+      const blockBodyRange = new vscode.Range(
+        headerEnd + 1,
+        0,
+        blockEnd - 1,
+        Number.MAX_SAFE_INTEGER
+      );
+      editor.setDecorations(this.decorations.block, [blockBodyRange]);
+    } else {
+      editor.setDecorations(this.decorations.block, []);
+    }
+
+    // Highlight the entire header with higher opacity.
+    const headerRange = new vscode.Range(
+      headerStart,
       0,
-      lastLine - 1,
+      headerEnd,
       Number.MAX_SAFE_INTEGER
     );
-    editor.setDecorations(this.decorations.block, [highlightRange]);
-    editor.setDecorations(this.decorations.firstLine, [
-      new vscode.Range(firstLine, 0, firstLine, Number.MAX_SAFE_INTEGER),
-    ]);
-    editor.setDecorations(this.decorations.lastLine, [
-      new vscode.Range(lastLine, 0, lastLine, Number.MAX_SAFE_INTEGER),
-    ]);
+    editor.setDecorations(this.decorations.firstLine, [headerRange]);
+
+    // Highlight the last line of the block.
+    const lastLineRange = new vscode.Range(
+      blockEnd,
+      0,
+      blockEnd,
+      Number.MAX_SAFE_INTEGER
+    );
+    editor.setDecorations(this.decorations.lastLine, [lastLineRange]);
   }
 
   private getChildBlocks(allBlocks: CodeBlock[], parentBlock: CodeBlock) {
@@ -186,6 +218,26 @@ export class Highlighter {
         ? current
         : prev;
     }, undefined as CodeBlock | undefined);
+  }
+
+  public getCurrentBlockRange(
+    editor: vscode.TextEditor
+  ): vscode.Range | undefined {
+    const blocks = parsePythonBlocks(editor.document);
+    const activeBlock = this.findInnerMostBlock(
+      blocks,
+      editor.selection.active.line
+    );
+    if (activeBlock) {
+      const startLine = activeBlock.openRange.start.line;
+      const endLine = activeBlock.closeRange.end.line;
+      const endCol = editor.document.lineAt(endLine).text.length;
+      return new vscode.Range(
+        new vscode.Position(startLine, 0),
+        new vscode.Position(endLine, endCol)
+      );
+    }
+    return undefined;
   }
 
   public dispose() {

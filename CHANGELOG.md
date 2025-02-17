@@ -4,6 +4,26 @@ All notable changes to the "py-scope" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## v0.5.1 - 17 Feb, 2025
+
+### Fixed
+
+- Block range identification logic handling indentation between pair of `"""` or `'''`
+
+---
+
+## v0.5.0 - 13 Feb, 2025
+
+### Fixed
+
+- Previously, if the block defining keyword, like def, is in one line, and the colon closing it is on another line (because of having multiple params in multiple lines), the block detection wouldn't happen, with this update, that issu has been fixed.
+
+### Added
+
+- New command that lets you select the entire highlighted block. You can find it in the commands by searching for `Select Block` or by using a shortcut `ctrl+alt+a` for windows, `cmd+alt+a` for mac
+
+---
+
 ## v0.4.2 - 05 Feb, 2025
 
 ### Updated
