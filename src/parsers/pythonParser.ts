@@ -37,32 +37,30 @@ function tryGetBlockHeader(
   document: vscode.TextDocument,
   startLine: number
 ): { startLine: number; colonLine: number; colonPosition: number } | undefined {
-  let headerLine = document.lineAt(startLine).text;
-  let codePart = headerLine.split(/#.*/)[0].trim();
+  // Get the first line and its code (ignoring comments).
+  const firstLineText = document.lineAt(startLine).text;
+  const codePart = firstLineText.split(/#.*/)[0].trim();
   const isKeyword = BLOCK_KEYWORDS.some((keyword) =>
     new RegExp(`^\\s*${keyword}\\b`).test(codePart)
   );
   if (!isKeyword) {
     return undefined;
   }
-  let colonIndex = headerLine.indexOf(":");
-  if (colonIndex !== -1) {
-    return { startLine, colonLine: startLine, colonPosition: colonIndex + 1 };
+  // If the first line itself (trimmed) ends with ":", we’re done.
+  if (firstLineText.trim().endsWith(":")) {
+    const colonPosition = firstLineText.lastIndexOf(":") + 1;
+    return { startLine, colonLine: startLine, colonPosition };
   }
+  // Otherwise, accumulate subsequent lines until we find a line that ends with ":".
   let currentLine = startLine;
-  let accumulatedHeader = headerLine;
   while (currentLine < document.lineCount - 1) {
     currentLine++;
-    const nextLineText = document.lineAt(currentLine).text;
-    accumulatedHeader += nextLineText;
-    colonIndex = nextLineText.indexOf(":");
-    if (colonIndex !== -1) {
-      return {
-        startLine,
-        colonLine: currentLine,
-        colonPosition: colonIndex + 1,
-      };
+    const lineText = document.lineAt(currentLine).text;
+    if (lineText.trim().endsWith(":")) {
+      const colonPosition = lineText.lastIndexOf(":") + 1;
+      return { startLine, colonLine: currentLine, colonPosition };
     }
+    // If the next line is not indented more than the starting line, assume the header did not continue.
     const baseIndent =
       document.lineAt(startLine).firstNonWhitespaceCharacterIndex;
     const nextIndent =
