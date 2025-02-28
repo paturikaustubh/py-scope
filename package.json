@@ -3,7 +3,7 @@
   "displayName": "PyScope - Python Code Block Highlighter",
   "description": "Enhance Python code readability with dynamic block highlighting. Perfect for visualizing code structure and improving developer productivity.",
   "icon": "images/logo.png",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "publisher": "KaustubhPaturi",
   "engines": {
     "vscode": "^1.96.0"

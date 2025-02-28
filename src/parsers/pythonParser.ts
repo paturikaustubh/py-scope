@@ -37,7 +37,7 @@ function tryGetBlockHeader(
   document: vscode.TextDocument,
   startLine: number
 ): { startLine: number; colonLine: number; colonPosition: number } | undefined {
-  // Get the first line and its code (ignoring comments).
+  // Get the first line's text and its code part (ignoring comments).
   const firstLineText = document.lineAt(startLine).text;
   const codePart = firstLineText.split(/#.*/)[0].trim();
   const isKeyword = BLOCK_KEYWORDS.some((keyword) =>
@@ -46,17 +46,20 @@ function tryGetBlockHeader(
   if (!isKeyword) {
     return undefined;
   }
-  // If the first line itself (trimmed) ends with ":", we’re done.
-  if (firstLineText.trim().endsWith(":")) {
+  // If the code portion of the first line ends with ":", we’re done.
+  if (codePart.endsWith(":")) {
+    // Use the full line to determine the colon position.
     const colonPosition = firstLineText.lastIndexOf(":") + 1;
     return { startLine, colonLine: startLine, colonPosition };
   }
-  // Otherwise, accumulate subsequent lines until we find a line that ends with ":".
+  // Otherwise, accumulate subsequent lines until we find a line whose code portion ends with ":".
   let currentLine = startLine;
   while (currentLine < document.lineCount - 1) {
     currentLine++;
     const lineText = document.lineAt(currentLine).text;
-    if (lineText.trim().endsWith(":")) {
+    // Only consider the code portion of the line (ignoring comments).
+    const codePartLine = lineText.split(/#.*/)[0].trim();
+    if (codePartLine.endsWith(":")) {
       const colonPosition = lineText.lastIndexOf(":") + 1;
       return { startLine, colonLine: currentLine, colonPosition };
     }
