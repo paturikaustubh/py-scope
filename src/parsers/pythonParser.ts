@@ -28,6 +28,7 @@ const BLOCK_KEYWORDS = [
   "with",
   "match",
   "case",
+  "async",
 ];
 
 /**
