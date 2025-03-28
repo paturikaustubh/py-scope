@@ -18,11 +18,14 @@ export function createFirstLineHighlight(
   opacity: number
 ): vscode.TextEditorDecorationType {
   const bgColor = `rgba(${color}, ${opacity})`;
+  const borderColor = `rgb(${color})`;
   return vscode.window.createTextEditorDecorationType({
     backgroundColor: bgColor,
     isWholeLine: true,
     overviewRulerColor: bgColor,
     overviewRulerLane: vscode.OverviewRulerLane.Full,
+    border: `1px solid ${borderColor}`,
+    borderWidth: "0 0 1px 0",
   });
 }
 
@@ -31,10 +34,14 @@ export function createLastLineHighlight(
   opacity: number
 ): vscode.TextEditorDecorationType {
   const bgColor = `rgba(${color}, ${opacity})`;
+  const borderColor = `rgb(${color})`;
+
   return vscode.window.createTextEditorDecorationType({
     backgroundColor: bgColor,
     isWholeLine: true,
     overviewRulerColor: bgColor,
     overviewRulerLane: vscode.OverviewRulerLane.Full,
+    border: `1px solid ${borderColor}`,
+    borderWidth: "1px 0 0 0",
   });
 }

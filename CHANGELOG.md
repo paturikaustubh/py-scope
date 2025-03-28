@@ -2,7 +2,23 @@
 
 All notable changes to the "py-scope" extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## v0.5.4 - 28 Mar, 2025
+
+### Updated
+
+- Block detection happens to async methods too.
+
+### Added
+
+- Border for first and last lines.
+
+## v0.5.3 - 28 Feb, 2025
+
+### Updated
+
+- Find block header func to find the header end
+
+---
 
 ## v0.5.2 - 18 Feb, 2025
 
