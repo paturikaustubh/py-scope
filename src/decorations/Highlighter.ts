@@ -12,6 +12,7 @@ export class Highlighter {
   private decorations: {
     block: vscode.TextEditorDecorationType;
     firstLine: vscode.TextEditorDecorationType;
+    firstLastLine: vscode.TextEditorDecorationType;
     lastLine: vscode.TextEditorDecorationType;
   };
   private currentBlockData?: {
@@ -51,6 +52,11 @@ export class Highlighter {
     return {
       block: createBlockHighlight(highlightColor, blockOpacity),
       firstLine: createFirstLineHighlight(highlightColor, firstLastOpacity),
+      firstLastLine: createFirstLineHighlight(
+        highlightColor,
+        firstLastOpacity,
+        true
+      ),
       lastLine: createLastLineHighlight(highlightColor, firstLastOpacity),
     };
   }
@@ -174,10 +180,19 @@ export class Highlighter {
     const headerRange = new vscode.Range(
       headerStart,
       0,
-      headerEnd,
+      headerEnd - 1,
       Number.MAX_SAFE_INTEGER
     );
     editor.setDecorations(this.decorations.firstLine, [headerRange]);
+
+    // Highlight the last line of headers
+    const headerLastRange = new vscode.Range(
+      headerEnd,
+      0,
+      headerEnd,
+      Number.MAX_SAFE_INTEGER
+    );
+    editor.setDecorations(this.decorations.firstLastLine, [headerLastRange]);
 
     // Highlight the last line of the block.
     const lastLineRange = new vscode.Range(

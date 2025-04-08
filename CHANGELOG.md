@@ -2,6 +2,12 @@
 
 All notable changes to the "py-scope" extension will be documented in this file.
 
+## v0.5.5 - 08 Apr, 2025
+
+### Updated
+
+- Block header highlight with border bottom logic updated to have border only for the last line in the header.
+
 ## v0.5.4 - 28 Mar, 2025
 
 ### Updated
