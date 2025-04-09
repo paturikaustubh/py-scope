@@ -177,13 +177,18 @@ export class Highlighter {
     }
 
     // Highlight the entire header with higher opacity.
-    const headerRange = new vscode.Range(
-      headerStart,
-      0,
-      headerEnd - 1,
-      Number.MAX_SAFE_INTEGER
-    );
-    editor.setDecorations(this.decorations.firstLine, [headerRange]);
+    console.log("headerEnd, headerStart", headerEnd, headerStart);
+    if (headerEnd > headerStart) {
+      const headerRange = new vscode.Range(
+        headerStart,
+        0,
+        headerEnd - 1,
+        Number.MAX_SAFE_INTEGER
+      );
+      editor.setDecorations(this.decorations.firstLine, [headerRange]);
+    } else {
+      editor.setDecorations(this.decorations.firstLine, []);
+    }
 
     // Highlight the last line of headers
     const headerLastRange = new vscode.Range(

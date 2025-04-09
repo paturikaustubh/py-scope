@@ -2,6 +2,12 @@
 
 All notable changes to the "py-scope" extension will be documented in this file.
 
+## v0.5.6 - 09 Apr, 2025
+
+### Fixed
+
+- Block header highlight fix for single line header
+
 ## v0.5.5 - 08 Apr, 2025
 
 ### Updated
