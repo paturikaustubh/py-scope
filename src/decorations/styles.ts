@@ -15,7 +15,8 @@ export function createBlockHighlight(
 
 export function createFirstLineHighlight(
   color: string,
-  opacity: number
+  opacity: number,
+  isLastLine: Boolean = false
 ): vscode.TextEditorDecorationType {
   const bgColor = `rgba(${color}, ${opacity})`;
   const borderColor = `rgb(${color})`;
@@ -25,7 +26,7 @@ export function createFirstLineHighlight(
     overviewRulerColor: bgColor,
     overviewRulerLane: vscode.OverviewRulerLane.Full,
     border: `1px solid ${borderColor}`,
-    borderWidth: "0 0 1px 0",
+    borderWidth: isLastLine ? "0 0 1px 0" : "0 0 0 0",
   });
 }
 

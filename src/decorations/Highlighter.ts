@@ -12,6 +12,7 @@ export class Highlighter {
   private decorations: {
     block: vscode.TextEditorDecorationType;
     firstLine: vscode.TextEditorDecorationType;
+    firstLastLine: vscode.TextEditorDecorationType;
     lastLine: vscode.TextEditorDecorationType;
   };
   private currentBlockData?: {
@@ -51,6 +52,11 @@ export class Highlighter {
     return {
       block: createBlockHighlight(highlightColor, blockOpacity),
       firstLine: createFirstLineHighlight(highlightColor, firstLastOpacity),
+      firstLastLine: createFirstLineHighlight(
+        highlightColor,
+        firstLastOpacity,
+        true
+      ),
       lastLine: createLastLineHighlight(highlightColor, firstLastOpacity),
     };
   }
@@ -171,13 +177,27 @@ export class Highlighter {
     }
 
     // Highlight the entire header with higher opacity.
-    const headerRange = new vscode.Range(
-      headerStart,
+    console.log("headerEnd, headerStart", headerEnd, headerStart);
+    if (headerEnd > headerStart) {
+      const headerRange = new vscode.Range(
+        headerStart,
+        0,
+        headerEnd - 1,
+        Number.MAX_SAFE_INTEGER
+      );
+      editor.setDecorations(this.decorations.firstLine, [headerRange]);
+    } else {
+      editor.setDecorations(this.decorations.firstLine, []);
+    }
+
+    // Highlight the last line of headers
+    const headerLastRange = new vscode.Range(
+      headerEnd,
       0,
       headerEnd,
       Number.MAX_SAFE_INTEGER
     );
-    editor.setDecorations(this.decorations.firstLine, [headerRange]);
+    editor.setDecorations(this.decorations.firstLastLine, [headerLastRange]);
 
     // Highlight the last line of the block.
     const lastLineRange = new vscode.Range(
