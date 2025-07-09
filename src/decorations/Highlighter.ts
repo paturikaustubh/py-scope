@@ -77,6 +77,7 @@ export class Highlighter {
   private disposeDecorations() {
     this.decorations.block.dispose();
     this.decorations.firstLine.dispose();
+    this.decorations.firstLastLine.dispose();
     this.decorations.lastLine.dispose();
   }
 
@@ -144,6 +145,7 @@ export class Highlighter {
     } else {
       editor.setDecorations(this.decorations.block, []);
       editor.setDecorations(this.decorations.firstLine, []);
+      editor.setDecorations(this.decorations.firstLastLine, []);
       editor.setDecorations(this.decorations.lastLine, []);
       this.currentBlockData = undefined;
     }
