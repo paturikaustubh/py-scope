@@ -28,6 +28,7 @@ export class Highlighter {
   private blockTree: BlockTree | undefined;
   private selectedNode: CodeBlockNode | undefined;
   private lastSelectionTimestamp: number = 0;
+  private selectionChainEnded: boolean = false;
 
   constructor() {
     this.decorations = this.createDecorations();
@@ -86,10 +87,14 @@ export class Highlighter {
     this.decorations.lastLine.dispose();
   }
 
-  public resetSelectionState() {
+  public resetSelectionState(editor: vscode.TextEditor) {
+    console.log("resetSelectionState called. selectedNode:", this.selectedNode?.block.openRange.start.line, "selectionChainEnded:", this.selectionChainEnded);
     const now = Date.now();
+    // Reset if enough time has passed (indicating a break in the command streak)
     if (now - this.lastSelectionTimestamp > 100) {
       this.selectedNode = undefined;
+      this.selectionChainEnded = false; // Allow a new chain to start
+      console.log("resetSelectionState: selectedNode reset, selectionChainEnded = false");
     }
   }
 
@@ -286,18 +291,34 @@ export class Highlighter {
 
     let nextNode: CodeBlockNode | undefined;
 
+    // If selectionChainEnded is true, it means we've reached the top and should stop.
+    if (this.selectionChainEnded) {
+        vscode.window.showInformationMessage("No more parent blocks to select");
+        return undefined;
+    }
+
     if (this.selectedNode) {
       nextNode = this.selectedNode.parent || undefined;
       if (nextNode && nextNode === blockTree.root) {
-        nextNode = undefined;
+        this.selectedNode = undefined; // Reset selectedNode when root is reached
+        this.selectionChainEnded = true; // Mark chain as ended
+        nextNode = undefined; // Ensure nextNode is also undefined
       }
     } else {
-      nextNode = blockTree.findNodeAtLine(editor.selection.active.line);
+      // This branch is taken on the very first call, or after selectedNode has been reset to undefined.
+      // Only find a new node at the cursor if the selection chain has NOT ended.
+      if (!this.selectionChainEnded) { // This check is crucial here.
+        nextNode = blockTree.findNodeAtLine(editor.selection.active.line);
+        if (nextNode) {
+          console.log("selectNextBlock: Found initial node:", nextNode.block.openRange.start.line);
+        }
+      }
     }
 
     if (nextNode && nextNode.block.openRange.start.line !== -1) {
       this.selectedNode = nextNode;
       this.lastSelectionTimestamp = Date.now();
+      this.selectionChainEnded = false; // A new chain has started or is continuing
       const { start } = nextNode.block.openRange;
       const endLine = nextNode.block.closeRange.end.line;
       const endCol = editor.document.lineAt(endLine).text.length;
@@ -306,8 +327,11 @@ export class Highlighter {
         new vscode.Position(endLine, endCol)
       );
     } else {
+      // This else block is reached if findNodeAtLine returns undefined (no block at cursor)
+      // or if nextNode was explicitly set to undefined when reaching the root.
       vscode.window.showInformationMessage("No more parent blocks to select");
-      this.selectedNode = undefined;
+      this.selectedNode = undefined; // Ensure it's undefined if no nextNode is found
+      this.selectionChainEnded = true; // Mark chain as ended
       return undefined;
     }
   }

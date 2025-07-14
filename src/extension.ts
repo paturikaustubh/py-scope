@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
       }, 100)
     ),
     vscode.window.onDidChangeTextEditorSelection((e) => {
-      highlighter.resetSelectionState();
+      highlighter.resetSelectionState(e.textEditor);
       highlighter.updateDecorations(e.textEditor);
     }),
     vscode.window.onDidChangeActiveTextEditor((editor) => {
