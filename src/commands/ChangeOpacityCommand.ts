@@ -80,7 +80,7 @@ export class ChangeOpacityCommand extends Command {
             );
 
             // Trigger an immediate decoration update.
-            this.highlighter.updateDecorations();
+            this.highlighter.updateDecorations(vscode.window.activeTextEditor);
           }
         }
       }
