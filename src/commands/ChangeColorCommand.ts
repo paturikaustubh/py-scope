@@ -71,7 +71,7 @@ export class ChangeColorCommand extends Command {
         );
 
         // Trigger immediate re-highlighting after a color change.
-        this.highlighter.updateDecorations();
+        this.highlighter.updateDecorations(vscode.window.activeTextEditor);
       }
     });
   }

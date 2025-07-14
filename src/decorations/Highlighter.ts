@@ -2,10 +2,13 @@ import * as vscode from "vscode";
 import { parsePythonBlocks, CodeBlock } from "../parsers/pythonParser";
 import {
   createBlockHighlight,
+  createFirstLastLineHighlight,
   createFirstLineHighlight,
   createLastLineHighlight,
 } from "./styles";
 import { getLineIndentation } from "../utils/editorUtils";
+
+import { BlockTree, CodeBlockNode } from "../utils/BlockTree";
 
 export class Highlighter {
   private readonly configSection = "pyScope";
@@ -22,6 +25,9 @@ export class Highlighter {
   };
   private previousIndentation?: number;
   private disposables: vscode.Disposable[] = [];
+  private blockTree: BlockTree | undefined;
+  private selectedNode: CodeBlockNode | undefined;
+  private lastSelectionTimestamp: number = 0;
 
   constructor() {
     this.decorations = this.createDecorations();
@@ -52,10 +58,9 @@ export class Highlighter {
     return {
       block: createBlockHighlight(highlightColor, blockOpacity),
       firstLine: createFirstLineHighlight(highlightColor, firstLastOpacity),
-      firstLastLine: createFirstLineHighlight(
+      firstLastLine: createFirstLastLineHighlight(
         highlightColor,
-        firstLastOpacity,
-        true
+        firstLastOpacity
       ),
       lastLine: createLastLineHighlight(highlightColor, firstLastOpacity),
     };
@@ -68,7 +73,7 @@ export class Highlighter {
         this.decorations = this.createDecorations();
         this.currentBlockData = undefined;
         this.previousIndentation = undefined;
-        this.updateDecorations();
+        this.updateDecorations(vscode.window.activeTextEditor);
       }
     });
     this.disposables.push(disposable);
@@ -81,53 +86,49 @@ export class Highlighter {
     this.decorations.lastLine.dispose();
   }
 
-  public updateDecorations() {
-    const editor = vscode.window.activeTextEditor;
+  public resetSelectionState() {
+    const now = Date.now();
+    if (now - this.lastSelectionTimestamp > 100) {
+      this.selectedNode = undefined;
+    }
+  }
+
+  public invalidateBlockTree() {
+    this.blockTree = undefined;
+  }
+
+  private getBlockTree(document: vscode.TextDocument): BlockTree {
+    if (!this.blockTree) {
+      const blocks = parsePythonBlocks(document);
+      this.blockTree = new BlockTree(blocks);
+    }
+    return this.blockTree;
+  }
+
+  public updateDecorations(editor?: vscode.TextEditor) {
     if (!editor || editor.document.languageId !== "python") {
       return;
     }
     try {
       // Parse blocks and highlight based on the current cursor line.
-      parsePythonBlocks(editor.document);
       this.highlightBlock(editor, editor.selection.active.line);
     } catch (error) {
       console.error("Error updating decorations:", error);
     }
   }
 
-  public handleCursorMove(editor: vscode.TextEditor) {
-    if (!editor) {
-      return;
-    }
-    const currentLine = editor.selection.active.line;
-    const currentIndentation = getLineIndentation(editor.document, currentLine);
-
-    if (
-      !this.currentBlockData ||
-      currentLine < this.currentBlockData.firstLine ||
-      currentLine > this.currentBlockData.lastLine ||
-      currentIndentation !== this.previousIndentation
-    ) {
-      this.previousIndentation = currentIndentation;
-      this.highlightBlock(editor, currentLine);
-      return;
-    }
-
-    if (this.currentBlockData.childBlocks.length > 0) {
-      for (const block of this.currentBlockData.childBlocks) {
-        if (currentLine >= block.firstLine && currentLine <= block.lastLine) {
-          this.highlightBlock(editor, currentLine);
-          return;
-        }
-      }
-    }
-  }
-
   private highlightBlock(editor: vscode.TextEditor, currentLine: number) {
-    const blocks = parsePythonBlocks(editor.document);
-    const activeBlock = this.findInnerMostBlock(blocks, currentLine);
+    // Clear all existing decorations first
+    editor.setDecorations(this.decorations.block, []);
+    editor.setDecorations(this.decorations.firstLine, []);
+    editor.setDecorations(this.decorations.firstLastLine, []);
+    editor.setDecorations(this.decorations.lastLine, []);
 
-    if (activeBlock) {
+    const blockTree = this.getBlockTree(editor.document);
+    const activeNode = blockTree.findNodeAtLine(currentLine);
+
+    if (activeNode && activeNode.block.openRange.start.line !== -1) {
+      const activeBlock = activeNode.block;
       const blockEndLine = activeBlock.closeRange.end.line;
       // Use headerEndLine (from the parser) for the header decoration.
       this.highlightRange(
@@ -140,31 +141,24 @@ export class Highlighter {
       this.currentBlockData = {
         firstLine: activeBlock.openRange.start.line,
         lastLine: blockEndLine,
-        childBlocks: this.getChildBlocks(blocks, activeBlock),
+        childBlocks: this.getChildBlocks(blockTree.root, activeBlock),
       };
     } else {
-      editor.setDecorations(this.decorations.block, []);
-      editor.setDecorations(this.decorations.firstLine, []);
-      editor.setDecorations(this.decorations.firstLastLine, []);
-      editor.setDecorations(this.decorations.lastLine, []);
+      // If no active block, ensure currentBlockData is cleared
       this.currentBlockData = undefined;
     }
   }
 
-  /**
-   * Highlights the header and the block body separately.
-   *
-   * @param editor The active text editor.
-   * @param headerStart The starting line of the header.
-   * @param headerEnd The ending line of the header (line with the colon).
-   * @param blockEnd The last line of the block.
-   */
   private highlightRange(
     editor: vscode.TextEditor,
     headerStart: number,
     headerEnd: number,
     blockEnd: number
   ) {
+    console.log(
+      `highlightRange: headerStart=${headerStart}, headerEnd=${headerEnd}, blockEnd=${blockEnd}`
+    );
+
     // Highlight the block body (if any) with lower opacity.
     if (headerEnd + 1 <= blockEnd - 1) {
       const blockBodyRange = new vscode.Range(
@@ -179,8 +173,11 @@ export class Highlighter {
     }
 
     // Highlight the entire header with higher opacity.
-    console.log("headerEnd, headerStart", headerEnd, headerStart);
-    if (headerEnd > headerStart) {
+    editor.setDecorations(this.decorations.firstLine, []);
+    editor.setDecorations(this.decorations.firstLastLine, []);
+
+    if (headerStart < headerEnd) {
+      // Multi-line header: Apply firstLine to lines before the last header line
       const headerRange = new vscode.Range(
         headerStart,
         0,
@@ -188,18 +185,29 @@ export class Highlighter {
         Number.MAX_SAFE_INTEGER
       );
       editor.setDecorations(this.decorations.firstLine, [headerRange]);
-    } else {
-      editor.setDecorations(this.decorations.firstLine, []);
-    }
 
-    // Highlight the last line of headers
-    const headerLastRange = new vscode.Range(
-      headerEnd,
-      0,
-      headerEnd,
-      Number.MAX_SAFE_INTEGER
-    );
-    editor.setDecorations(this.decorations.firstLastLine, [headerLastRange]);
+      // Apply firstLastLine to the actual last line of the header
+      const headerLastRange = new vscode.Range(
+        headerEnd,
+        0,
+        headerEnd,
+        Number.MAX_SAFE_INTEGER
+      );
+      editor.setDecorations(this.decorations.firstLastLine, [headerLastRange]);
+    } else {
+      // headerStart === headerEnd (single-line header)
+      // Ensure firstLine is explicitly cleared for single-line headers
+      editor.setDecorations(this.decorations.firstLine, []);
+
+      // Single-line header: Only apply firstLastLine to this line
+      const headerLastRange = new vscode.Range(
+        headerStart, // or headerEnd, they are the same
+        0,
+        headerStart,
+        Number.MAX_SAFE_INTEGER
+      );
+      editor.setDecorations(this.decorations.firstLastLine, [headerLastRange]);
+    }
 
     // Highlight the last line of the block.
     const lastLineRange = new vscode.Range(
@@ -211,18 +219,31 @@ export class Highlighter {
     editor.setDecorations(this.decorations.lastLine, [lastLineRange]);
   }
 
-  private getChildBlocks(allBlocks: CodeBlock[], parentBlock: CodeBlock) {
-    return allBlocks
-      .filter(
-        (block) =>
-          block.openRange.start.line > parentBlock.openRange.start.line &&
-          block.closeRange.end.line <= parentBlock.closeRange.end.line
-      )
-      .map((block) => ({
-        firstLine: block.openRange.start.line,
-        lastLine: block.closeRange.end.line,
-      }))
-      .sort((a, b) => a.firstLine - b.firstLine);
+  private getChildBlocks(rootNode: CodeBlockNode, parentBlock: CodeBlock) {
+    const parentNode = this.findNodeInTree(rootNode, parentBlock);
+    if (parentNode) {
+      return parentNode.children.map((child) => ({
+        firstLine: child.block.openRange.start.line,
+        lastLine: child.block.closeRange.end.line,
+      }));
+    }
+    return [];
+  }
+
+  private findNodeInTree(
+    node: CodeBlockNode,
+    block: CodeBlock
+  ): CodeBlockNode | undefined {
+    if (node.block === block) {
+      return node;
+    }
+    for (const child of node.children) {
+      const found = this.findNodeInTree(child, block);
+      if (found) {
+        return found;
+      }
+    }
+    return undefined;
   }
 
   private findInnerMostBlock(
@@ -245,12 +266,10 @@ export class Highlighter {
   public getCurrentBlockRange(
     editor: vscode.TextEditor
   ): vscode.Range | undefined {
-    const blocks = parsePythonBlocks(editor.document);
-    const activeBlock = this.findInnerMostBlock(
-      blocks,
-      editor.selection.active.line
-    );
-    if (activeBlock) {
+    const blockTree = this.getBlockTree(editor.document);
+    const activeNode = blockTree.findNodeAtLine(editor.selection.active.line);
+    if (activeNode && activeNode.block.openRange.start.line !== -1) {
+      const activeBlock = activeNode.block;
       const startLine = activeBlock.openRange.start.line;
       const endLine = activeBlock.closeRange.end.line;
       const endCol = editor.document.lineAt(endLine).text.length;
@@ -260,6 +279,37 @@ export class Highlighter {
       );
     }
     return undefined;
+  }
+
+  public selectNextBlock(editor: vscode.TextEditor): vscode.Range | undefined {
+    const blockTree = this.getBlockTree(editor.document);
+
+    let nextNode: CodeBlockNode | undefined;
+
+    if (this.selectedNode) {
+      nextNode = this.selectedNode.parent || undefined;
+      if (nextNode && nextNode === blockTree.root) {
+        nextNode = undefined;
+      }
+    } else {
+      nextNode = blockTree.findNodeAtLine(editor.selection.active.line);
+    }
+
+    if (nextNode && nextNode.block.openRange.start.line !== -1) {
+      this.selectedNode = nextNode;
+      this.lastSelectionTimestamp = Date.now();
+      const { start } = nextNode.block.openRange;
+      const endLine = nextNode.block.closeRange.end.line;
+      const endCol = editor.document.lineAt(endLine).text.length;
+      return new vscode.Range(
+        new vscode.Position(start.line, 0),
+        new vscode.Position(endLine, endCol)
+      );
+    } else {
+      vscode.window.showInformationMessage("No more parent blocks to select");
+      this.selectedNode = undefined;
+      return undefined;
+    }
   }
 
   public dispose() {
