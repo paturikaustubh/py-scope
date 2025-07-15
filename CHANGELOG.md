@@ -1,6 +1,16 @@
 # Change Log
 
-All notable changes to the "py-scope" extension will be documented in this file.
+## [0.8.0] - 15 Jul, 2025
+
+### Added
+
+- Undo Block Selection: A new command (`pyScope.undoBlockSelection`) and keybinding (`ctrl+alt+z` / `cmd+alt+z`) have been added to allow users to undo previous block selections, restoring the editor's selection and the highlighter's state.
+
+### Changed
+
+- Selection Stack Management: The `Select Block` command now pushes and pops selection states onto a stack, enabling the undo functionality.
+- Highlighter State Management: The `Highlighter` now exposes `selectedNode` and `lastSelectionTimestamp` publicly and clears the selection stack upon state reset.
+- Warning Message Update: The "No more parent blocks to select" message has been changed from an information message to a warning message.
 
 ## [0.7.0] - 14 Jul, 2025
 

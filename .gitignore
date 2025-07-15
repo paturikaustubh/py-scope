@@ -4,3 +4,14 @@ node_modules
 .vscode-test/
 *.vsix
 *.py
+*.js
+*.js.map
+*.d.ts
+*.env*
+tsconfig.tsbuildinfo
+coverage/
+.eslintcache
+.parcel-cache/
+.next/
+build/
+tmp/
