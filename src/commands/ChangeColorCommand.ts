@@ -48,17 +48,14 @@ export class ChangeColorCommand extends Command {
             async (message) => {
               if (message.command === "updateColor") {
                 const newColor = message.color;
-                console.log("PyScope", newColor, "andi");
                 const config = vscode.workspace.getConfiguration(
                   this.CONFIG_SECTION
                 );
-                console.log("PyScope", config, "prev");
                 await config.update(
                   "blockHighlightColor",
                   newColor,
                   vscode.ConfigurationTarget.Global
                 );
-                console.log("PyScope", config);
 
                 vscode.window.showInformationMessage(
                   `PyScope highlight color updated to: ${newColor}`

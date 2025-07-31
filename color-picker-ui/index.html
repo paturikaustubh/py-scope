@@ -79,6 +79,21 @@
                     height: fit-content;
                     padding: 0em 0.5em;
                   }
+
+                  &:hover {
+                    &::after {
+                      content: attr(data-appology);
+                      position: absolute;
+                      top: 120%;
+                      left: 0;
+                      background-color: #000;
+                      color: #fff;
+                      padding: 0.5em;
+                      z-index: 10;
+                      width: 200%;
+                      text-align: start;
+                    }
+                  }
                 }
               }
               button {
@@ -119,26 +134,46 @@
           <input type="color" id="color-picker-input" />
           <div id="confirm-section">
             <div id="values">
-              <span id="r" data-value="R" class="value">0</span>
-              <span id="g" data-value="G" class="value">0</span>
-              <span id="b" data-value="B" class="value">0</span>
+              <span
+                id="r"
+                data-value="R"
+                data-appology="Currently, this is a read-only block, you can change the values from the color picker :)"
+                class="value"
+                >0</span
+              >
+              <span
+                id="g"
+                data-value="G"
+                data-appology="Currently, this is a read-only block, you can change the values from the color picker :)"
+                class="value"
+                >0</span
+              >
+              <span
+                id="b"
+                data-value="B"
+                data-appology="Currently, this is a read-only block, you can change the values from the color picker :)"
+                class="value"
+                >0</span
+              >
             </div>
             <button id="confirm-button">Confirm</button>
           </div>
         </div>
       </div>
-      <div id="preview">
+      <!-- <div id="preview">
         <h2>Preview</h2>
         <div id="editor"></div>
-      </div>
+      </div> -->
     </section>
 
     <script defer>
       const colorPickerEle = document.getElementById("color-picker-input");
       const confirmButton = document.getElementById("confirm-button");
-      const vscode = acquireVsCodeApi();
 
-      console.log("PyScope", vscode);
+      let vscode;
+      try {
+        vscode = acquireVsCodeApi();
+      } catch (error) {}
 
       function hexToRgb(hex) {
         hex = hex.replace("#", "");
@@ -149,8 +184,6 @@
       }
 
       colorPickerEle.addEventListener("input", (e) => {
-        console.log(e.target.value);
-
         const rgbValue = hexToRgb(e.target.value);
         document.getElementById("r").textContent = rgbValue[0];
         document.getElementById("g").textContent = rgbValue[1];
@@ -160,14 +193,16 @@
       confirmButton.addEventListener("click", () => {
         const hexValue = colorPickerEle.value;
         const rgbValue = hexToRgb(hexValue);
-        vscode.postMessage({
-          command: "updateColor",
-          color: rgbValue.join(", "),
-        });
+        if (vscode) {
+          vscode.postMessage({
+            command: "updateColor",
+            color: rgbValue.join(", "),
+          });
+        }
       });
     </script>
 
-    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/loader.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/loader.js"></script>
     <script>
       window.addEventListener("load", () => {
         // Wait for the font to load before initializing Monaco
@@ -212,6 +247,6 @@ if __name__ == "__main__":
           });
         });
       });
-    </script>
+    </script> -->
   </body>
 </html>
