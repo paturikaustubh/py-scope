@@ -1,5 +1,15 @@
 # Change Log
 
+## [0.9.1] - 01 Aug, 2025
+
+### Added
+
+- New action buttons for selecting custom color web view.
+
+### Changed
+
+- Default value of the color picker to the currently set value.
+
 ## [0.9.0] - 31 Jul, 2025
 
 ### Added

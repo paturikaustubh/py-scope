@@ -63,6 +63,7 @@ export class ChangeColorCommand extends Command {
                 this.highlighter.updateDecorations(
                   vscode.window.activeTextEditor
                 );
+              } else if (message.command === "cancel") {
                 panel.dispose();
               }
             },
@@ -103,9 +104,20 @@ export class ChangeColorCommand extends Command {
     const htmlPath = vscode.Uri.joinPath(colorPickerUIPath, "index.html");
     const html = require("fs").readFileSync(htmlPath.fsPath, "utf8");
 
-    return html.replace(
-      '<link rel="stylesheet" href="styles.css">',
-      `<link rel="stylesheet" href="${stylesUri}">`
-    );
+    const config = vscode.workspace.getConfiguration(this.CONFIG_SECTION);
+    const blockHighlightColor = config.get<string>(
+      "blockHighlightColor",
+      "27, 153, 5"
+    ); // Default color
+
+    return html
+      .replace(
+        '<link rel="stylesheet" href="styles.css">',
+        `<link rel="stylesheet" href="${stylesUri}">`
+      )
+      .replace(
+        "</body>",
+        `<script>window.blockHighlightColor = "${blockHighlightColor}";</script></body>`
+      );
   }
 }
