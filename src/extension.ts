@@ -16,7 +16,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Instantiate our command objects.
   const commands = [
-    new ChangeColorCommand(highlighter),
+    new ChangeColorCommand(context, highlighter),
     new ChangeOpacityCommand(highlighter),
     new SelectBlockCommand(highlighter),
     new UndoBlockSelectionCommand(highlighter),

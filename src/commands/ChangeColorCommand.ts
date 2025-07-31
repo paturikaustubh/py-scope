@@ -5,7 +5,10 @@ import { Highlighter } from "../decorations/Highlighter";
 export class ChangeColorCommand extends Command {
   private readonly CONFIG_SECTION = "pyScope";
 
-  constructor(private highlighter: Highlighter) {
+  constructor(
+    private context: vscode.ExtensionContext,
+    private highlighter: Highlighter
+  ) {
     super();
   }
 
@@ -28,51 +31,84 @@ export class ChangeColorCommand extends Command {
       });
 
       if (selectedColor) {
-        let newColor = selectedColor.value;
+        if (selectedColor.value === "custom") {
+          const panel = vscode.window.createWebviewPanel(
+            "colorPicker",
+            "Color Picker",
+            vscode.ViewColumn.One,
+            { enableScripts: true }
+          );
 
-        if (newColor === "custom") {
-          const customColor = await vscode.window.showInputBox({
-            prompt:
-              "Enter RGB color (e.g., 255,0,0) or leave empty for default",
-            placeHolder: "27, 153, 5",
-            validateInput: (input) => {
-              if (!input || input.trim() === "") {
-                return null; // Allow empty input for fallback.
+          panel.webview.html = this.getWebviewContent(
+            panel.webview,
+            this.context.extensionUri
+          );
+
+          panel.webview.onDidReceiveMessage(
+            async (message) => {
+              if (message.command === "updateColor") {
+                const newColor = message.color;
+                console.log("PyScope", newColor, "andi");
+                const config = vscode.workspace.getConfiguration(
+                  this.CONFIG_SECTION
+                );
+                console.log("PyScope", config, "prev");
+                await config.update(
+                  "blockHighlightColor",
+                  newColor,
+                  vscode.ConfigurationTarget.Global
+                );
+                console.log("PyScope", config);
+
+                vscode.window.showInformationMessage(
+                  `PyScope highlight color updated to: ${newColor}`
+                );
+                this.highlighter.updateDecorations(
+                  vscode.window.activeTextEditor
+                );
+                panel.dispose();
               }
-              const parts = input.split(",");
-              if (parts.length !== 3) {
-                return "Invalid format. Use R,G,B (e.g., 255,0,0).";
-              }
-              for (const part of parts) {
-                const num = parseInt(part.trim(), 10);
-                if (isNaN(num) || num < 0 || num > 255) {
-                  return "Each value must be between 0 and 255.";
-                }
-              }
-              return null;
             },
-          });
+            undefined,
+            this.context.subscriptions
+          );
+        } else {
+          const newColor = selectedColor.value;
 
-          if (!customColor || customColor.trim() === "") {
-            newColor = "27, 153, 5";
-          } else {
-            newColor = customColor;
-          }
+          const config = vscode.workspace.getConfiguration(this.CONFIG_SECTION);
+          await config.update(
+            "blockHighlightColor",
+            newColor,
+            vscode.ConfigurationTarget.Global
+          );
+          vscode.window.showInformationMessage(
+            `PyScope highlight color updated to: ${newColor}`
+          );
+
+          // Trigger immediate re-highlighting after a color change.
+          this.highlighter.updateDecorations(vscode.window.activeTextEditor);
         }
-
-        const config = vscode.workspace.getConfiguration(this.CONFIG_SECTION);
-        await config.update(
-          "blockHighlightColor",
-          newColor,
-          vscode.ConfigurationTarget.Global
-        );
-        vscode.window.showInformationMessage(
-          `PyScope highlight color updated to: ${newColor}`
-        );
-
-        // Trigger immediate re-highlighting after a color change.
-        this.highlighter.updateDecorations(vscode.window.activeTextEditor);
       }
     });
+  }
+
+  private getWebviewContent(
+    webview: vscode.Webview,
+    extensionUri: vscode.Uri
+  ): string {
+    const colorPickerUIPath = vscode.Uri.joinPath(
+      extensionUri,
+      "color-picker-ui"
+    );
+    const stylesPath = vscode.Uri.joinPath(colorPickerUIPath, "styles.css");
+    const stylesUri = webview.asWebviewUri(stylesPath);
+
+    const htmlPath = vscode.Uri.joinPath(colorPickerUIPath, "index.html");
+    const html = require("fs").readFileSync(htmlPath.fsPath, "utf8");
+
+    return html.replace(
+      '<link rel="stylesheet" href="styles.css">',
+      `<link rel="stylesheet" href="${stylesUri}">`
+    );
   }
 }
