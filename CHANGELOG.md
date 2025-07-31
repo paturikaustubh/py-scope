@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.9.0] - 31 Jul, 2025
+
+### Added
+
+- Custom color picker UI for changing the highlight color when opted for 'Custom' from the changeHighlightColor command.
+
 ## [0.8.0] - 15 Jul, 2025
 
 ### Added
