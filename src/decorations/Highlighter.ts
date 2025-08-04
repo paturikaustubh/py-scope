@@ -124,6 +124,15 @@ export class Highlighter {
       return;
     }
 
+    const cursorLine = editor.selection.active.line;
+    if (
+      this.currentBlockData &&
+      cursorLine >= this.currentBlockData.firstLine &&
+      cursorLine <= this.currentBlockData.lastLine
+    ) {
+      return; // Cursor is still within the same block, no need to update.
+    }
+
     // If the selection stack is active, clear all decorations and do nothing.
     if (selectionStack.length > 0) {
       this.clearAllDecorations(editor);
@@ -132,7 +141,7 @@ export class Highlighter {
 
     try {
       // Parse blocks and highlight based on the current cursor line.
-      this.highlightBlock(editor, editor.selection.active.line);
+      this.highlightBlock(editor, cursorLine);
     } catch (error) {
       console.error("Error updating decorations:", error);
     }

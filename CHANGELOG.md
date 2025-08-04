@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.9.2] - 04 Aug, 2025
+
+### Changed
+
+- Optimized block highlighting by checking if the cursor is within the current block before re-highlighting.
+
 ## [0.9.1] - 01 Aug, 2025
 
 ### Added
