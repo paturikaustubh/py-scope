@@ -1,6 +1,38 @@
 # Change Log
 
-All notable changes to the "py-scope" extension will be documented in this file.
+## [0.9.2] - 04 Aug, 2025
+
+### Changed
+
+- Optimized block highlighting by checking if the cursor is within the current block before re-highlighting.
+
+## [0.9.1] - 01 Aug, 2025
+
+### Added
+
+- New action buttons for selecting custom color web view.
+
+### Changed
+
+- Default value of the color picker to the currently set value.
+
+## [0.9.0] - 31 Jul, 2025
+
+### Added
+
+- Custom color picker UI for changing the highlight color when opted for 'Custom' from the changeHighlightColor command.
+
+## [0.8.0] - 15 Jul, 2025
+
+### Added
+
+- Undo Block Selection: A new command (`pyScope.undoBlockSelection`) and keybinding (`ctrl+alt+z` / `cmd+alt+z`) have been added to allow users to undo previous block selections, restoring the editor's selection and the highlighter's state.
+
+### Changed
+
+- Selection Stack Management: The `Select Block` command now pushes and pops selection states onto a stack, enabling the undo functionality.
+- Highlighter State Management: The `Highlighter` now exposes `selectedNode` and `lastSelectionTimestamp` publicly and clears the selection stack upon state reset.
+- Warning Message Update: The "No more parent blocks to select" message has been changed from an information message to a warning message.
 
 ## [0.7.0] - 14 Jul, 2025
 

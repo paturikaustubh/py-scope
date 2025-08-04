@@ -4,6 +4,7 @@ import { Highlighter } from "./decorations/Highlighter";
 import { ChangeColorCommand } from "./commands/ChangeColorCommand";
 import { ChangeOpacityCommand } from "./commands/ChangeOpacityCommand";
 import { SelectBlockCommand } from "./commands/SelectBlockCommand";
+import { UndoBlockSelectionCommand } from "./commands/UndoBlockSelectionCommand";
 
 let highlighter: Highlighter;
 
@@ -15,9 +16,10 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Instantiate our command objects.
   const commands = [
-    new ChangeColorCommand(highlighter),
+    new ChangeColorCommand(context, highlighter),
     new ChangeOpacityCommand(highlighter),
-    new SelectBlockCommand(highlighter), // new command added here
+    new SelectBlockCommand(highlighter),
+    new UndoBlockSelectionCommand(highlighter),
   ];
 
   // Register all commands.
@@ -36,8 +38,9 @@ export function activate(context: vscode.ExtensionContext) {
       }, 100)
     ),
     vscode.window.onDidChangeTextEditorSelection((e) => {
-      highlighter.resetSelectionState(e.textEditor);
-      highlighter.updateDecorations(e.textEditor);
+      if (e.textEditor) {
+        highlighter.updateDecorations(e.textEditor);
+      }
     }),
     vscode.window.onDidChangeActiveTextEditor((editor) => {
         if (editor) {

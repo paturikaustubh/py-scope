@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap"
+      rel="stylesheet"
+    />
+    <title>PyScope Color Picker</title>
+    <style>
+      body {
+        font-family: "Fira Code", monospace;
+        height: 80dvh;
+        margin-inline: auto;
+        margin: 0;
+        padding: 0;
+        outline: 0;
+        padding-inline: 1em;
+
+        #title {
+          font-weight: 900;
+          font-size: 2.5em;
+        }
+
+        section {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          justify-content: start;
+          gap: 2em;
+          flex-grow: 1;
+          height: 75%;
+
+          #color-picker-container {
+            display: flex;
+            /* flex-direction: column; */
+            width: 100%;
+            gap: 1em;
+
+            input[type="color"] {
+              all: unset;
+              height: 10em;
+              width: 15em;
+              cursor: pointer;
+            }
+
+            #confirm-section {
+              width: 100%;
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
+
+              #values {
+                display: flex;
+                width: 100%;
+                justify-content: space-between;
+                align-items: end;
+                gap: 1em;
+
+                .value {
+                  /* font-size: 2em; */
+                  padding: 0.5em;
+                  width: 100%;
+                  border-radius: 4px;
+                  background-color: inherit;
+                  border: 2px solid #ccc;
+                  text-align: end;
+                  height: fit-content;
+                  position: relative;
+
+                  &::before {
+                    content: attr(data-value);
+                    position: absolute;
+                    /* top: -12px; */
+                    left: 0px;
+                    background-color: inherit;
+                    width: fit-content;
+                    z-index: 10;
+                    height: fit-content;
+                    padding: 0em 0.5em;
+                  }
+
+                  &:hover {
+                    &::after {
+                      content: attr(data-appology);
+                      position: absolute;
+                      top: 120%;
+                      left: 0;
+                      background-color: #000;
+                      color: #fff;
+                      padding: 0.5em;
+                      z-index: 10;
+                      width: 200%;
+                      text-align: start;
+                    }
+                  }
+                }
+              }
+              #buttons {
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                place-content: end;
+                gap: 0.5em;
+
+                button {
+                  all: unset;
+                  cursor: pointer;
+                  padding: 0.5em 1em;
+                  border-radius: 4px;
+                  background-color: #e4e4e4;
+                  color: #000;
+                  border: 2px solid #ccc;
+                }
+              }
+            }
+          }
+
+          #preview {
+            height: 100%;
+            width: 100%;
+            /* overflow: hidden; */
+
+            #editor {
+              /* border: 1px solid #ccc; */
+              height: inherit;
+              width: inherit;
+            }
+          }
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1 id="title">PyScope Color Picker</h1>
+    <hr />
+    <section>
+      <div>
+        <h2>Select Color</h2>
+        <div id="color-picker-container">
+          <input type="color" id="color-picker-input" />
+          <div id="confirm-section">
+            <div id="values">
+              <span
+                id="r"
+                data-value="R"
+                data-appology="Currently, this is a read-only block, you can change the values from the color picker :)"
+                class="value"
+                >0</span
+              >
+              <span
+                id="g"
+                data-value="G"
+                data-appology="Currently, this is a read-only block, you can change the values from the color picker :)"
+                class="value"
+                >0</span
+              >
+              <span
+                id="b"
+                data-value="B"
+                data-appology="Currently, this is a read-only block, you can change the values from the color picker :)"
+                class="value"
+                >0</span
+              >
+            </div>
+            <div id="buttons">
+              <button id="cancel-button">Cancel</button>
+              <button id="revert-button">Revert</button>
+              <button id="confirm-button">Confirm</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- <div id="preview">
+        <h2>Preview</h2>
+        <div id="editor"></div>
+      </div> -->
+    </section>
+
+    <script defer>
+      const colorPickerEle = document.getElementById("color-picker-input");
+      const confirmButton = document.getElementById("confirm-button");
+      const cancelButton = document.getElementById("cancel-button");
+      const revertButton = document.getElementById("revert-button");
+
+      let vscode;
+      try {
+        vscode = acquireVsCodeApi();
+      } catch (error) {}
+
+      function hexToRgb(hex) {
+        hex = hex.replace("#", "");
+        const r = parseInt(hex.slice(0, 2), 16);
+        const g = parseInt(hex.slice(2, 4), 16);
+        const b = parseInt(hex.slice(4, 6), 16);
+        return [r, g, b];
+      }
+
+      colorPickerEle.addEventListener("input", (e) => {
+        const rgbValue = hexToRgb(e.target.value);
+        document.getElementById("r").textContent = rgbValue[0];
+        document.getElementById("g").textContent = rgbValue[1];
+        document.getElementById("b").textContent = rgbValue[2];
+      });
+
+      confirmButton.addEventListener("click", () => {
+        const hexValue = colorPickerEle.value;
+        const rgbValue = hexToRgb(hexValue);
+        if (vscode) {
+          vscode.postMessage({
+            command: "updateColor",
+            color: rgbValue.join(", "),
+          });
+        }
+      });
+
+      cancelButton.addEventListener("click", () => {
+        if (vscode) {
+          vscode.postMessage({
+            command: "cancel",
+          });
+        }
+      });
+
+      revertButton.addEventListener("click", () => setWindowValue());
+
+      function setWindowValue() {
+        if (window.blockHighlightColor) {
+          const rgb = window.blockHighlightColor.split(", ").map(Number);
+          const hex =
+            "#" +
+            ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2])
+              .toString(16)
+              .slice(1);
+          colorPickerEle.value = hex;
+          document.getElementById("r").textContent = rgb[0];
+          document.getElementById("g").textContent = rgb[1];
+          document.getElementById("b").textContent = rgb[2];
+        }
+      }
+
+      // Initialize color picker with the current blockHighlightColor
+      window.addEventListener("load", () => setWindowValue());
+    </script>
+
+    <!-- <script src="https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/loader.js"></script>
+    <script>
+      window.addEventListener("load", () => {
+        // Wait for the font to load before initializing Monaco
+        document.fonts.load('16px "Fira Code"').then(() => {
+          require.config({
+            paths: {
+              vs: "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs",
+            },
+          });
+
+          require(["vs/editor/editor.main"], function () {
+            const editor = monaco.editor.create(
+              document.getElementById("editor"),
+              {
+                value: `class Greeter:
+    def __init__(self, greeting):
+        self.greeting = greeting
+
+    def greet(self, name):
+        print(self.greeting, name)
+
+if __name__ == "__main__":
+    greeter = Greeter("Hello")
+    greeter.greet("John")
+    greeter.greet("Jane")
+
+    if 5 > 10:
+        print("5 is greater than 10")
+    else:
+        print("5 is not greater than 10")
+                `,
+                language: "python",
+                theme: "vs-dark",
+                fontFamily: '"Fira Code", monospace',
+                fontSize: 16,
+                lineHeight: 22,
+                readOnly: true,
+              }
+            );
+
+            window.addEventListener("resize", () => editor.layout());
+          });
+        });
+      });
+    </script> -->
+  </body>
+</html>

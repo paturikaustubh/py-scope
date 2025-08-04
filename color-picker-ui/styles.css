@@ -1,0 +1,19 @@
+body {
+  font-family: sans-serif;
+  text-align: center;
+}
+
+input[type="color"] {
+  all: unset;
+  height: 10em;
+  width: 10em;
+  cursor: pointer;
+}
+
+button {
+  margin-top: 1em;
+  padding: 0.5em 1em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
