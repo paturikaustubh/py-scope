@@ -1,6 +1,8 @@
 # Change Log
 
-## [0.9.3] - 05 Aug, 2025
+All dates are based on IST (Indian Standard Time)
+
+## [0.9.3] - 06 Aug, 2025
 
 ### Changed
 
