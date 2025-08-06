@@ -35,7 +35,7 @@ export class ChangeOpacityCommand extends Command {
           opacityOptions,
           {
             placeHolder: "Select the opacity setting to change",
-          }
+          },
         );
 
         if (selectedOption) {
@@ -61,29 +61,29 @@ export class ChangeOpacityCommand extends Command {
               numValue = parseFloat(input);
               if (isNaN(numValue) || numValue <= 0 || numValue > 1) {
                 vscode.window.showErrorMessage(
-                  "Invalid opacity value. Must be a number between 0 (exclusive) and 1 (inclusive)."
+                  "Invalid opacity value. Must be a number between 0 (exclusive) and 1 (inclusive).",
                 );
                 return;
               }
             }
 
             const config = vscode.workspace.getConfiguration(
-              this.CONFIG_SECTION
+              this.CONFIG_SECTION,
             );
             await config.update(
               selectedOption.key,
               numValue,
-              vscode.ConfigurationTarget.Global
+              vscode.ConfigurationTarget.Global,
             );
             vscode.window.showInformationMessage(
-              `${selectedOption.label} updated to ${numValue}`
+              `${selectedOption.label} updated to ${numValue}`,
             );
 
             // Trigger an immediate decoration update.
             this.highlighter.updateDecorations(vscode.window.activeTextEditor);
           }
         }
-      }
+      },
     );
   }
 }

@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.9.3] - 05 Aug, 2025
+
+### Changed
+
+- Updated block highlighting logic to correctly identify inner blocks.
+
 ## [0.9.2] - 04 Aug, 2025
 
 ### Changed

@@ -21,7 +21,10 @@ export class BlockTree {
   private buildTree(blocks: CodeBlock[]): CodeBlockNode {
     const rootBlock: CodeBlock = {
       openRange: new Range(new Position(0, 0), new Position(0, 0)),
-      closeRange: new Range(new Position(Infinity, 0), new Position(Infinity, 0)),
+      closeRange: new Range(
+        new Position(Infinity, 0),
+        new Position(Infinity, 0),
+      ),
       headerEndLine: -1,
     };
     const rootNode = new CodeBlockNode(rootBlock);
@@ -32,9 +35,9 @@ export class BlockTree {
 
     const nodes = blocks.map((block) => new CodeBlockNode(block));
     nodes.sort((a, b) => {
-        const aSize = a.block.closeRange.end.line - a.block.openRange.start.line;
-        const bSize = b.block.closeRange.end.line - b.block.openRange.start.line;
-        return aSize - bSize;
+      const aSize = a.block.closeRange.end.line - a.block.openRange.start.line;
+      const bSize = b.block.closeRange.end.line - b.block.openRange.start.line;
+      return aSize - bSize;
     });
 
     nodes.forEach((node) => {
@@ -81,9 +84,9 @@ export class BlockTree {
         // If this node is a better (more specific) match, update bestMatch
         if (
           !bestMatch ||
-          (bestMatch.block.closeRange.end.line -
+          bestMatch.block.closeRange.end.line -
             bestMatch.block.openRange.start.line >
-            node.block.closeRange.end.line - node.block.openRange.start.line)
+            node.block.closeRange.end.line - node.block.openRange.start.line
         ) {
           bestMatch = node;
         }
