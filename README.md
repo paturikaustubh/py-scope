@@ -114,4 +114,4 @@ Happy coding! 🎉🐍
 
 **P.S.** If you love PyScope, share it with your friends and spread the word! 🌍✨
 
-# **_**Nothing great ever came that easy**_**
+# **\_**Nothing great ever came that easy**\_**

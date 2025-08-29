@@ -7,7 +7,7 @@ export class ChangeColorCommand extends Command {
 
   constructor(
     private context: vscode.ExtensionContext,
-    private highlighter: Highlighter
+    private highlighter: Highlighter,
   ) {
     super();
   }
@@ -36,12 +36,12 @@ export class ChangeColorCommand extends Command {
             "colorPicker",
             "Color Picker",
             vscode.ViewColumn.One,
-            { enableScripts: true }
+            { enableScripts: true },
           );
 
           panel.webview.html = this.getWebviewContent(
             panel.webview,
-            this.context.extensionUri
+            this.context.extensionUri,
           );
 
           panel.webview.onDidReceiveMessage(
@@ -49,26 +49,26 @@ export class ChangeColorCommand extends Command {
               if (message.command === "updateColor") {
                 const newColor = message.color;
                 const config = vscode.workspace.getConfiguration(
-                  this.CONFIG_SECTION
+                  this.CONFIG_SECTION,
                 );
                 await config.update(
                   "blockHighlightColor",
                   newColor,
-                  vscode.ConfigurationTarget.Global
+                  vscode.ConfigurationTarget.Global,
                 );
 
                 vscode.window.showInformationMessage(
-                  `PyScope highlight color updated to: ${newColor}`
+                  `PyScope highlight color updated to: ${newColor}`,
                 );
                 this.highlighter.updateDecorations(
-                  vscode.window.activeTextEditor
+                  vscode.window.activeTextEditor,
                 );
               } else if (message.command === "cancel") {
                 panel.dispose();
               }
             },
             undefined,
-            this.context.subscriptions
+            this.context.subscriptions,
           );
         } else {
           const newColor = selectedColor.value;
@@ -77,10 +77,10 @@ export class ChangeColorCommand extends Command {
           await config.update(
             "blockHighlightColor",
             newColor,
-            vscode.ConfigurationTarget.Global
+            vscode.ConfigurationTarget.Global,
           );
           vscode.window.showInformationMessage(
-            `PyScope highlight color updated to: ${newColor}`
+            `PyScope highlight color updated to: ${newColor}`,
           );
 
           // Trigger immediate re-highlighting after a color change.
@@ -92,11 +92,11 @@ export class ChangeColorCommand extends Command {
 
   private getWebviewContent(
     webview: vscode.Webview,
-    extensionUri: vscode.Uri
+    extensionUri: vscode.Uri,
   ): string {
     const colorPickerUIPath = vscode.Uri.joinPath(
       extensionUri,
-      "color-picker-ui"
+      "color-picker-ui",
     );
     const stylesPath = vscode.Uri.joinPath(colorPickerUIPath, "styles.css");
     const stylesUri = webview.asWebviewUri(stylesPath);
@@ -107,17 +107,17 @@ export class ChangeColorCommand extends Command {
     const config = vscode.workspace.getConfiguration(this.CONFIG_SECTION);
     const blockHighlightColor = config.get<string>(
       "blockHighlightColor",
-      "27, 153, 5"
+      "27, 153, 5",
     ); // Default color
 
     return html
       .replace(
         '<link rel="stylesheet" href="styles.css">',
-        `<link rel="stylesheet" href="${stylesUri}">`
+        `<link rel="stylesheet" href="${stylesUri}">`,
       )
       .replace(
         "</body>",
-        `<script>window.blockHighlightColor = "${blockHighlightColor}";</script></body>`
+        `<script>window.blockHighlightColor = "${blockHighlightColor}";</script></body>`,
       );
   }
 }

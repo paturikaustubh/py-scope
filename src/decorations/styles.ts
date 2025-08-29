@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 
 export function createBlockHighlight(
   color: string,
-  opacity: number
+  opacity: number,
 ): vscode.TextEditorDecorationType {
   const bgColor = `rgba(${color}, ${opacity})`;
   return vscode.window.createTextEditorDecorationType({
@@ -15,7 +15,7 @@ export function createBlockHighlight(
 
 export function createFirstLineHighlight(
   color: string,
-  opacity: number
+  opacity: number,
 ): vscode.TextEditorDecorationType {
   const bgColor = `rgba(${color}, ${opacity})`;
   return vscode.window.createTextEditorDecorationType({
@@ -28,7 +28,7 @@ export function createFirstLineHighlight(
 
 export function createFirstLastLineHighlight(
   color: string,
-  opacity: number
+  opacity: number,
 ): vscode.TextEditorDecorationType {
   const bgColor = `rgba(${color}, ${opacity})`;
   const borderColor = `rgb(${color})`;
@@ -44,7 +44,7 @@ export function createFirstLastLineHighlight(
 
 export function createLastLineHighlight(
   color: string,
-  opacity: number
+  opacity: number,
 ): vscode.TextEditorDecorationType {
   const bgColor = `rgba(${color}, ${opacity})`;
   const borderColor = `rgb(${color})`;

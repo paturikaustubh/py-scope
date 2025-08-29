@@ -32,7 +32,7 @@ export class UndoBlockSelectionCommand extends Command {
           if (primarySelection) {
             editor.revealRange(
               new vscode.Range(primarySelection.start, primarySelection.end),
-              vscode.TextEditorRevealType.InCenterIfOutsideViewport
+              vscode.TextEditorRevealType.InCenterIfOutsideViewport,
             );
           }
         }

@@ -1,5 +1,17 @@
 # Change Log
 
+## [0.9.4] - 05 Aug, 2025
+
+### Fixed
+
+- Corrected a bug where highlighting would not update properly after pressing Enter after a colon (`:`), ensuring the new line is not incorrectly styled as a header.
+
+## [0.9.3] - 05 Aug, 2025
+
+### Changed
+
+- Updated block highlighting logic to correctly identify inner blocks.
+
 ## [0.9.2] - 04 Aug, 2025
 
 ### Changed
