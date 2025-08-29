@@ -6,7 +6,6 @@ import {
   createFirstLineHighlight,
   createLastLineHighlight,
 } from "./styles";
-import { getLineIndentation } from "../utils/editorUtils";
 
 import { selectionStack } from "../utils/selectionStack";
 import { BlockTree, CodeBlockNode } from "../utils/BlockTree";
@@ -129,15 +128,18 @@ export class Highlighter {
     const blockTree = this.getBlockTree(editor.document);
     const activeNode = blockTree.findNodeAtLine(cursorLine);
 
-    const newBlockStartLine = activeNode
-      ? activeNode.block.openRange.start.line
-      : undefined;
-    const currentBlockStartLine = this.currentBlockData
-      ? this.currentBlockData.firstLine
-      : undefined;
+    const newBlockStartLine = activeNode?.block.openRange.start.line;
+    const newBlockEndLine = activeNode?.block.closeRange.end.line;
 
-    if (newBlockStartLine === currentBlockStartLine) {
-      return; // Cursor is still within the same block, no need to update.
+    const currentBlockStartLine = this.currentBlockData?.firstLine;
+    const currentBlockEndLine = this.currentBlockData?.lastLine;
+
+    // If the block is the same (same start and end), do nothing.
+    if (
+      newBlockStartLine === currentBlockStartLine &&
+      newBlockEndLine === currentBlockEndLine
+    ) {
+      return;
     }
 
     // If the selection stack is active, clear all decorations and do nothing.

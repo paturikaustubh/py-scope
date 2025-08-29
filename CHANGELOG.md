@@ -1,8 +1,12 @@
 # Change Log
 
-All dates are based on IST (Indian Standard Time)
+## [0.9.4] - 05 Aug, 2025
 
-## [0.9.3] - 06 Aug, 2025
+### Fixed
+
+- Corrected a bug where highlighting would not update properly after pressing Enter after a colon (`:`), ensuring the new line is not incorrectly styled as a header.
+
+## [0.9.3] - 05 Aug, 2025
 
 ### Changed
 
