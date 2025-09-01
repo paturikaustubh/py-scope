@@ -88,21 +88,17 @@ export class Highlighter {
   }
 
   public resetSelectionState(editor: vscode.TextEditor) {
-    console.log(
-      "resetSelectionState called. selectedNode:",
-      this.selectedNode?.block.openRange.start.line,
-      "selectionChainEnded:",
-      this.selectionChainEnded,
-    );
     const now = Date.now();
     // Reset if enough time has passed (indicating a break in the command streak)
-    if (now - this.lastSelectionTimestamp > 100) {
+    // or if the selection is empty
+    if (now - this.lastSelectionTimestamp > 200 || editor.selection.isEmpty) {
+      if (selectionStack.length > 0) {
+        console.log("Selection chain broken, clearing selection stack.");
+        selectionStack.length = 0; // Clear the stack
+        this.updateDecorations(editor); // Update decorations to re-render highlighting
+      }
       this.selectedNode = undefined;
       this.selectionChainEnded = false; // Allow a new chain to start
-      selectionStack.length = 0; // Clear the stack
-      console.log(
-        "resetSelectionState: selectedNode reset, selectionChainEnded = false",
-      );
     }
   }
 
@@ -134,17 +130,9 @@ export class Highlighter {
     const currentBlockStartLine = this.currentBlockData?.firstLine;
     const currentBlockEndLine = this.currentBlockData?.lastLine;
 
-    // If the block is the same (same start and end), do nothing.
-    if (
-      newBlockStartLine === currentBlockStartLine &&
-      newBlockEndLine === currentBlockEndLine
-    ) {
-      return;
-    }
-
-    // If the selection stack is active, clear all decorations and do nothing.
     if (selectionStack.length > 0) {
       this.clearAllDecorations(editor);
+      this.currentBlockData = undefined; // Clear current block data
       return;
     }
 

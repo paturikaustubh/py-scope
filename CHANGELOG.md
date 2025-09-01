@@ -1,5 +1,17 @@
 # Change Log
 
+## [0.9.5] - 29 Aug, 2025
+
+### Changed
+
+- Improved highlighting logic to be more robust and responsive.
+- Highlighting is now correctly restored when a selection is cleared.
+- The selection stack is now properly cleared when the selection command chain is broken.
+
+### Fixed
+
+- Removed circular dependency in `package.json`.
+
 ## [0.9.4] - 05 Aug, 2025
 
 ### Fixed
