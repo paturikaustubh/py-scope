@@ -26,10 +26,10 @@ jobs:
           VERSION="${{ env.version }}"
           echo "Looking for changelog for $VERSION"
 
-          # Get changelog section for the current version
-          RELEASE_NOTES=$(awk "/## \\[${VERSION}\\]/ {flag=1; next} /^## \\[/ {flag=0} flag" CHANGELOG.md)
+          # Match '## [X.Y.Z]' even if there's a date after it
+          RELEASE_NOTES=$(awk "/## \\[${VERSION}\\]/ {flag=1; next} /^## \\[/ && \$2 != \"[${VERSION}]\" {flag=0} flag" CHANGELOG.md)
 
-          # Fallback if no notes found
+          # Fallback if empty
           if [ -z "$RELEASE_NOTES" ]; then
             echo "No changelog entry found for $VERSION"
             RELEASE_NOTES="No detailed release notes available."
@@ -39,7 +39,7 @@ jobs:
           echo "$RELEASE_NOTES" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      # 4. Create a GitHub release using the extracted changelog
+      # 4. Create a GitHub release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:

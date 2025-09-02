@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.9.11] - 02 Sep, 2025
+
+### Modified
+
+- updated regex to extract description for release
+
 ## [0.9.10] - 02 Sep, 2025
 
 ### Modified
