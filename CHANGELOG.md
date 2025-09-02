@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.9.9] - 02 Sep, 2025
+
+### Modified
+
+- create release to use PAT token instead of GITHUB TOKEN
+
 ## [0.9.8] - 02 Sep, 2025
 
 ### Added
