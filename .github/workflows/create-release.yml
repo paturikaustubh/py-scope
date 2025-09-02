@@ -53,4 +53,4 @@ jobs:
           name: "Release v${{ env.version }}"
           body: ${{ env.release_notes }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
