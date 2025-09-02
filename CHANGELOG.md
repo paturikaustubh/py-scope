@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.9.10] - 02 Sep, 2025
+
+### Modified
+
+- updated logic to get version from package.json :) (early realisation)
+
 ## [0.9.9] - 02 Sep, 2025
 
 ### Modified
