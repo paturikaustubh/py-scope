@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.9.6] - 29 Aug, 2025
+
+### Changed
+
+- Optimized highlighting logic to only re-render when the block context changes, improving performance.
+
 ## [0.9.5] - 29 Aug, 2025
 
 ### Changed
