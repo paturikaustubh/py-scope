@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.9.8] - 02 Sep, 2025
+
+### Added
+
+- New workflow to create release
+- RELEASE_NOTES for general audience
+
 ## [0.9.6] - 29 Aug, 2025
 
 ### Changed
