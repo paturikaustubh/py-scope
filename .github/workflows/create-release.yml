@@ -10,32 +10,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout the repo
+      # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Set up Python to extract the latest version from setup.py
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-
-      # 3. Get the current version from setup.py
-      - name: Get version from setup.py
+      # 2. Get the version from package.json
+      - name: Get version from package.json
         id: get_version
-        run: echo "version=$(python setup.py --version)" >> $GITHUB_ENV
+        run: echo "version=$(jq -r .version package.json)" >> $GITHUB_ENV
 
-      # 4. Extract the latest changelog section for the current version
+      # 3. Extract the changelog for the current version
       - name: Extract release notes from CHANGELOG.md
         id: changelog
         run: |
-          VERSION="v${{ env.version }}"
+          VERSION="${{ env.version }}"
           echo "Looking for changelog for $VERSION"
 
-          # Get lines starting from the version header until the next header
-          RELEASE_NOTES=$(awk "/## \\[${{ env.version }}\\]/ {flag=1; next} /^## \\[/ {flag=0} flag" CHANGELOG.md)
+          # Get changelog section for the current version
+          RELEASE_NOTES=$(awk "/## \\[${VERSION}\\]/ {flag=1; next} /^## \\[/ {flag=0} flag" CHANGELOG.md)
 
-          # If empty, fallback to an empty message
+          # Fallback if no notes found
           if [ -z "$RELEASE_NOTES" ]; then
             echo "No changelog entry found for $VERSION"
             RELEASE_NOTES="No detailed release notes available."
@@ -45,7 +39,7 @@ jobs:
           echo "$RELEASE_NOTES" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      # 5. Create a GitHub release using the extracted changelog
+      # 4. Create a GitHub release using the extracted changelog
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
