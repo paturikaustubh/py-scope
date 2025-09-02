@@ -41,6 +41,7 @@ export class UndoBlockSelectionCommand extends Command {
         this.highlighter.resetSelectionState(editor);
         vscode.window.showWarningMessage("No more selections to undo.");
       }
+      this.highlighter.updateDecorations(editor);
     });
   }
 }

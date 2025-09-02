@@ -42,6 +42,11 @@ export function activate(context: vscode.ExtensionContext) {
     ),
     vscode.window.onDidChangeTextEditorSelection((e) => {
       if (e.textEditor) {
+        // If the selection change was not caused by our commands, reset the state.
+        const now = Date.now();
+        if (now - highlighter.lastSelectionTimestamp > 100) {
+            highlighter.resetSelectionState(e.textEditor);
+        }
         highlighter.updateDecorations(e.textEditor);
       }
     }),

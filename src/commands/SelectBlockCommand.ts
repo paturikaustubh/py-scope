@@ -27,6 +27,7 @@ export class SelectBlockCommand extends Command {
           // If no new block is selected, pop the state we just pushed.
           selectionStack.pop();
         }
+        this.highlighter.updateDecorations(editor);
       }
     });
   }

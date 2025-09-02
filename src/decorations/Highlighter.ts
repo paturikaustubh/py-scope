@@ -46,13 +46,13 @@ export class Highlighter {
     if (blockOpacity <= 0 || blockOpacity > 1) {
       blockOpacity = 0.08;
       vscode.window.showWarningMessage(
-        "Invalid block highlight opacity provided. Using default opacity.",
+        "Invalid block highlight opacity provided. Using default opacity."
       );
     }
     if (firstLastOpacity <= 0 || firstLastOpacity > 1) {
       firstLastOpacity = 0.2;
       vscode.window.showWarningMessage(
-        "Invalid first/last line opacity provided. Using default opacity.",
+        "Invalid first/last line opacity provided. Using default opacity."
       );
     }
 
@@ -61,7 +61,7 @@ export class Highlighter {
       firstLine: createFirstLineHighlight(highlightColor, firstLastOpacity),
       firstLastLine: createFirstLastLineHighlight(
         highlightColor,
-        firstLastOpacity,
+        firstLastOpacity
       ),
       lastLine: createLastLineHighlight(highlightColor, firstLastOpacity),
     };
@@ -88,21 +88,17 @@ export class Highlighter {
   }
 
   public resetSelectionState(editor: vscode.TextEditor) {
-    console.log(
-      "resetSelectionState called. selectedNode:",
-      this.selectedNode?.block.openRange.start.line,
-      "selectionChainEnded:",
-      this.selectionChainEnded,
-    );
     const now = Date.now();
     // Reset if enough time has passed (indicating a break in the command streak)
-    if (now - this.lastSelectionTimestamp > 100) {
+    // or if the selection is empty
+    if (now - this.lastSelectionTimestamp > 200 || editor.selection.isEmpty) {
+      if (selectionStack.length > 0) {
+        console.log("Selection chain broken, clearing selection stack.");
+        selectionStack.length = 0; // Clear the stack
+        this.updateDecorations(editor); // Update decorations to re-render highlighting
+      }
       this.selectedNode = undefined;
       this.selectionChainEnded = false; // Allow a new chain to start
-      selectionStack.length = 0; // Clear the stack
-      console.log(
-        "resetSelectionState: selectedNode reset, selectionChainEnded = false",
-      );
     }
   }
 
@@ -123,8 +119,13 @@ export class Highlighter {
       return;
     }
 
-    const cursorLine = editor.selection.active.line;
+    if (selectionStack.length > 0) {
+      this.clearAllDecorations(editor);
+      this.currentBlockData = undefined; // Clear current block data
+      return;
+    }
 
+    const cursorLine = editor.selection.active.line;
     const blockTree = this.getBlockTree(editor.document);
     const activeNode = blockTree.findNodeAtLine(cursorLine);
 
@@ -142,9 +143,12 @@ export class Highlighter {
       return;
     }
 
-    // If the selection stack is active, clear all decorations and do nothing.
-    if (selectionStack.length > 0) {
-      this.clearAllDecorations(editor);
+    // If there is no active block, clear decorations and current block data
+    if (!activeNode) {
+      if (this.currentBlockData) {
+        this.clearAllDecorations(editor);
+        this.currentBlockData = undefined;
+      }
       return;
     }
 
@@ -177,7 +181,7 @@ export class Highlighter {
         editor,
         activeBlock.openRange.start.line, // header start (e.g., the "def" line)
         activeBlock.headerEndLine, // header end (line with the colon)
-        blockEndLine, // block end (last content line)
+        blockEndLine // block end (last content line)
       );
 
       this.currentBlockData = {
@@ -195,10 +199,10 @@ export class Highlighter {
     editor: vscode.TextEditor,
     headerStart: number,
     headerEnd: number,
-    blockEnd: number,
+    blockEnd: number
   ) {
     console.log(
-      `highlightRange: headerStart=${headerStart}, headerEnd=${headerEnd}, blockEnd=${blockEnd}`,
+      `highlightRange: headerStart=${headerStart}, headerEnd=${headerEnd}, blockEnd=${blockEnd}`
     );
 
     // Highlight the block body (if any) with lower opacity.
@@ -207,7 +211,7 @@ export class Highlighter {
         headerEnd + 1,
         0,
         blockEnd - 1,
-        Number.MAX_SAFE_INTEGER,
+        Number.MAX_SAFE_INTEGER
       );
       editor.setDecorations(this.decorations.block, [blockBodyRange]);
     } else {
@@ -224,7 +228,7 @@ export class Highlighter {
         headerStart,
         0,
         headerEnd - 1,
-        Number.MAX_SAFE_INTEGER,
+        Number.MAX_SAFE_INTEGER
       );
       editor.setDecorations(this.decorations.firstLine, [headerRange]);
 
@@ -233,7 +237,7 @@ export class Highlighter {
         headerEnd,
         0,
         headerEnd,
-        Number.MAX_SAFE_INTEGER,
+        Number.MAX_SAFE_INTEGER
       );
       editor.setDecorations(this.decorations.firstLastLine, [headerLastRange]);
     } else {
@@ -246,7 +250,7 @@ export class Highlighter {
         headerStart, // or headerEnd, they are the same
         0,
         headerStart,
-        Number.MAX_SAFE_INTEGER,
+        Number.MAX_SAFE_INTEGER
       );
       editor.setDecorations(this.decorations.firstLastLine, [headerLastRange]);
     }
@@ -256,7 +260,7 @@ export class Highlighter {
       blockEnd,
       0,
       blockEnd,
-      Number.MAX_SAFE_INTEGER,
+      Number.MAX_SAFE_INTEGER
     );
     editor.setDecorations(this.decorations.lastLine, [lastLineRange]);
   }
@@ -274,7 +278,7 @@ export class Highlighter {
 
   private findNodeInTree(
     node: CodeBlockNode,
-    block: CodeBlock,
+    block: CodeBlock
   ): CodeBlockNode | undefined {
     if (node.block === block) {
       return node;
@@ -290,26 +294,23 @@ export class Highlighter {
 
   private findInnerMostBlock(
     blocks: CodeBlock[],
-    cursorLine: number,
+    cursorLine: number
   ): CodeBlock | undefined {
-    return blocks.reduce(
-      (prev, current) => {
-        const inBlock =
-          cursorLine >= current.openRange.start.line &&
-          cursorLine <= current.closeRange.end.line;
-        return inBlock &&
-          (!prev ||
-            current.closeRange.end.line - current.openRange.start.line <
-              prev.closeRange.end.line - prev.openRange.start.line)
-          ? current
-          : prev;
-      },
-      undefined as CodeBlock | undefined,
-    );
+    return blocks.reduce((prev, current) => {
+      const inBlock =
+        cursorLine >= current.openRange.start.line &&
+        cursorLine <= current.closeRange.end.line;
+      return inBlock &&
+        (!prev ||
+          current.closeRange.end.line - current.openRange.start.line <
+            prev.closeRange.end.line - prev.openRange.start.line)
+        ? current
+        : prev;
+    }, undefined as CodeBlock | undefined);
   }
 
   public getCurrentBlockRange(
-    editor: vscode.TextEditor,
+    editor: vscode.TextEditor
   ): vscode.Range | undefined {
     const blockTree = this.getBlockTree(editor.document);
     const activeNode = blockTree.findNodeAtLine(editor.selection.active.line);
@@ -320,7 +321,7 @@ export class Highlighter {
       const endCol = editor.document.lineAt(endLine).text.length;
       return new vscode.Range(
         new vscode.Position(startLine, 0),
-        new vscode.Position(endLine, endCol),
+        new vscode.Position(endLine, endCol)
       );
     }
     return undefined;
@@ -363,7 +364,7 @@ export class Highlighter {
         if (nextNode) {
           console.log(
             "selectNextBlock: Found initial node:",
-            nextNode.block.openRange.start.line,
+            nextNode.block.openRange.start.line
           );
         }
       }
@@ -378,7 +379,7 @@ export class Highlighter {
       const endCol = editor.document.lineAt(endLine).text.length;
       return new vscode.Range(
         new vscode.Position(start.line, 0),
-        new vscode.Position(endLine, endCol),
+        new vscode.Position(endLine, endCol)
       );
     } else {
       // This else block is reached if findNodeAtLine returns undefined (no block at cursor)
