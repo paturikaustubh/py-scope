@@ -2,6 +2,15 @@
 
 ---
 
+## **v0.9.12** — _03 Sep 2025_
+
+**Bug Fixes**
+
+- Fixed a critical bug where code blocks with multi-line headers (e.g., function definitions with parameters spanning multiple lines) were not being detected. Highlighting for these structures now works correctly.
+
+---
+
+
 ## **v0.9.6** — _29 Aug 2025_
 
 **Performance Improvements**

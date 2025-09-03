@@ -36,13 +36,13 @@ const BLOCK_KEYWORDS = [
  */
 function tryGetBlockHeader(
   document: vscode.TextDocument,
-  startLine: number,
+  startLine: number
 ): { startLine: number; colonLine: number; colonPosition: number } | undefined {
-  // Get the first line's text and its code part (ignoring comments).
   const firstLineText = document.lineAt(startLine).text;
+  // Get the first line's text and its code part (ignoring comments).
   const codePart = firstLineText.split(/#.*/)[0].trim();
   const isKeyword = BLOCK_KEYWORDS.some((keyword) =>
-    new RegExp(`^\\s*${keyword}\\b`).test(codePart),
+    new RegExp(`^\\s*${keyword}\\b`).test(codePart)
   );
   if (!isKeyword) {
     return undefined;
@@ -63,14 +63,6 @@ function tryGetBlockHeader(
     if (codePartLine.endsWith(":")) {
       const colonPosition = lineText.lastIndexOf(":") + 1;
       return { startLine, colonLine: currentLine, colonPosition };
-    }
-    // If the next line is not indented more than the starting line, assume the header did not continue.
-    const baseIndent =
-      document.lineAt(startLine).firstNonWhitespaceCharacterIndex;
-    const nextIndent =
-      document.lineAt(currentLine).firstNonWhitespaceCharacterIndex;
-    if (nextIndent <= baseIndent) {
-      break;
     }
   }
   return undefined;
@@ -118,7 +110,7 @@ function computeInStringArray(document: vscode.TextDocument): boolean[] {
 function createBlock(
   document: vscode.TextDocument,
   block: BlockStackItem,
-  endLine: number,
+  endLine: number
 ): CodeBlock {
   let lastContentLine = endLine;
   while (lastContentLine > block.startLine) {
@@ -134,13 +126,13 @@ function createBlock(
       block.startLine,
       block.colonPosition,
       block.startLine,
-      block.colonPosition,
+      block.colonPosition
     ),
     closeRange: new vscode.Range(
       lastContentLine,
       line.text.length,
       lastContentLine,
-      line.text.length,
+      line.text.length
     ),
     headerEndLine: block.headerEndLine,
   };
@@ -181,7 +173,7 @@ export function parsePythonBlocks(document: vscode.TextDocument): CodeBlock[] {
     const headerInfo = tryGetBlockHeader(document, lineNum);
     if (headerInfo) {
       const baseIndent = document.lineAt(
-        headerInfo.startLine,
+        headerInfo.startLine
       ).firstNonWhitespaceCharacterIndex;
       stack.push({
         indent: baseIndent,
