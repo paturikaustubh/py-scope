@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.9.12] - 03 Sep, 2025
+
+### Fixed
+
+- Corrected a bug in the Python parser that prevented multi-line block headers (e.g., function definitions spanning multiple lines) from being properly detected.
+
 ## [0.9.11] - 02 Sep, 2025
 
 ### Modified
