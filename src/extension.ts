@@ -28,34 +28,34 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   // Register event listeners.
+  const debouncedUpdate = debounce((editor: vscode.TextEditor) => {
+    highlighter.invalidateBlockTree();
+    highlighter.updateDecorations(editor);
+  }, 100);
+
   context.subscriptions.push(
-    vscode.workspace.onDidChangeTextDocument(
-      debounce((e) => {
-        if (
-          vscode.window.activeTextEditor &&
-          e.document === vscode.window.activeTextEditor.document
-        ) {
-          highlighter.invalidateBlockTree(); // Invalidate the tree
-          highlighter.updateDecorations(vscode.window.activeTextEditor);
-        }
-      }, 100),
-    ),
+    vscode.workspace.onDidChangeTextDocument((e) => {
+      if (
+        vscode.window.activeTextEditor &&
+        e.document === vscode.window.activeTextEditor.document
+      ) {
+        debouncedUpdate(vscode.window.activeTextEditor);
+      }
+    }),
     vscode.window.onDidChangeTextEditorSelection((e) => {
       if (e.textEditor) {
-        // If the selection change was not caused by our commands, reset the state.
         const now = Date.now();
         if (now - highlighter.lastSelectionTimestamp > 100) {
-            highlighter.resetSelectionState(e.textEditor);
+          highlighter.resetSelectionState(e.textEditor);
         }
-        highlighter.updateDecorations(e.textEditor);
+        debouncedUpdate(e.textEditor);
       }
     }),
     vscode.window.onDidChangeActiveTextEditor((editor) => {
       if (editor) {
-        highlighter.invalidateBlockTree(); // Also invalidate when switching files
-        highlighter.updateDecorations(editor);
+        debouncedUpdate(editor);
       }
-    }),
+    })
   );
 }
 
