@@ -10,7 +10,7 @@
 
 PyScope is your new best friend for writing Python code in VS Code. It **highlights code blocks** (like functions, loops, and conditionals) with beautiful background colors, making it super easy to see where each block starts and ends. No more squinting at indentation! 👀
 
-![PyScope Walkthru](./media/samples/walkthru.mp4)
+![PyScope Walkthru](./media/samples/walkthru.gif)
 
 ---
 
@@ -48,7 +48,7 @@ You can change the color of the highlighted blocks to match your theme or prefer
 **Using the `pyScope.changeColor` Command:**
 Run the command from the command palette (`Ctrl+Shift+P`) and choose from a list of preset colors or select "Custom..." to open a color picker.
 
-![Change color using command](./media/samples/color-changer.mp4)
+![Change color using command](./media/samples/color-changer.gif)
 
 ### Customizable Highlight Opacity
 
@@ -57,7 +57,7 @@ You can also adjust the opacity of the block highlight and the first/last line h
 **Using the `pyScope.changeOpacity` Command:**
 Run the command from the command palette and choose which opacity setting you want to change. Then, enter a value between 0 and 1.
 
-![Change opacity using command](./media/samples/highlight-opacity.mp4)
+![Change opacity using command](./media/samples/highlight-opacity.gif)
 
 ### Block Selection
 
@@ -69,7 +69,7 @@ Run the command from the command palette to select the current block. You can ru
 **Using the `pyScope.undoBlockSelection` Command:**
 Run this command to undo the last block selection.
 
-![Block selection using commands](./media/samples/block-selector.mp4)
+![Block selection using commands](./media/samples/block-selector.gif)
 
 ---
 
@@ -119,4 +119,4 @@ Happy coding! 🎉🐍
 
 ---
 
-# **\_\_Nothing great ever came that easy\_\_**
+# _**Nothing great ever came that easy**_
