@@ -1,5 +1,20 @@
 # Change Log
 
+## [0.10.0] - 08 Sep, 2025
+
+### Changed
+
+- Updated the `README.md` with more detailed information, embedded videos, and a focus on command-based configuration.
+
+### Added
+
+- New highlight style for single-line blocks (e.g., `def hello(): pass`) to provide better visual distinction with top and bottom borders.
+
+### Fixed
+
+- The parser now correctly identifies single-line blocks that contain a body on the same line.
+- Fixed a bug where typing a block keyword (e.g., `def`) on a new line would cause the parser to greedily match with unrelated code below. Highlighting now only applies after a colon (`:`) is present.
+
 ## [0.9.12] - 03 Sep, 2025
 
 ### Fixed

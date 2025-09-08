@@ -47,17 +47,29 @@ function tryGetBlockHeader(
   if (!isKeyword) {
     return undefined;
   }
-  // If the code portion of the first line ends with ":", we’re done.
+  const baseIndent = document.lineAt(startLine).firstNonWhitespaceCharacterIndex;
+
+  // If the code portion of the first line contains ":", we’re done.
   if (codePart.includes(":")) {
     // Use the full line to determine the colon position.
     const colonPosition = firstLineText.lastIndexOf(":") + 1;
     return { startLine, colonLine: startLine, colonPosition };
   }
+
   // Otherwise, accumulate subsequent lines until we find a line whose code portion ends with ":".
   let currentLine = startLine;
   while (currentLine < document.lineCount - 1) {
     currentLine++;
-    const lineText = document.lineAt(currentLine).text;
+    const line = document.lineAt(currentLine);
+    const lineIndent = line.firstNonWhitespaceCharacterIndex;
+
+    // If the line is not empty and its indentation is not greater than the base indentation,
+    // it's not part of a multi-line header, so we stop.
+    if (!line.isEmptyOrWhitespace && lineIndent <= baseIndent) {
+      break;
+    }
+
+    const lineText = line.text;
     // Only consider the code portion of the line (ignoring comments).
     const codePartLine = lineText.split(/#.*/)[0].trim();
     if (codePartLine.endsWith(":")) {

@@ -2,6 +2,20 @@
 
 ---
 
+## **v0.10.0** — _08 Sep 2025_
+
+**Documentation**
+
+- The `README.md` has been completely revamped with more detailed explanations and embedded videos to better showcase the extension's features.
+- The documentation now emphasizes command-based configuration for a more streamlined user experience.
+
+**Bug Fixes & Enhancements**
+
+- **Improved Highlighting Accuracy:** Single-line blocks (e.g., `def hello(): ...`) are now handled correctly. Highlighting will also no longer appear prematurely while you are still typing a new function or class definition.
+- **New Single-Line Block Style:** These single-line blocks now get their own distinct highlight style with a full box border, making them easier to spot.
+
+---
+
 ## **v0.9.12** — _03 Sep 2025_
 
 **Bug Fixes**
@@ -9,7 +23,6 @@
 - Fixed a critical bug where code blocks with multi-line headers (e.g., function definitions with parameters spanning multiple lines) were not being detected. Highlighting for these structures now works correctly.
 
 ---
-
 
 ## **v0.9.6** — _29 Aug 2025_
 

@@ -10,7 +10,7 @@
 
 PyScope is your new best friend for writing Python code in VS Code. It **highlights code blocks** (like functions, loops, and conditionals) with beautiful background colors, making it super easy to see where each block starts and ends. No more squinting at indentation! 👀
 
-![PyScope Walkthru](./images/samples/walk-thru.gif)
+![PyScope Walkthru](./media/samples/walkthru.mp4)
 
 ---
 
@@ -37,10 +37,39 @@ It’s like having **X-ray vision** for your Python code! 👓
 
 ## Features ✨
 
-- **Dynamic Block Detection**: Automatically detects blocks as you type.
-- **Cursor Tracking**: Highlights the block where your cursor is. 🖱️
-- **Supports All Python Keywords**: Works with `def`, `class`, `if`, `else`, `for`, `while`, `try`, `except`, and more.
-- **Customizable**: Change highlight colors and opacity to match your theme. 🎨
+### Dynamic Block Highlighting
+
+PyScope automatically detects and highlights the code block your cursor is currently in. This works for all Python keywords.
+
+### Customizable Highlight Color
+
+You can change the color of the highlighted blocks to match your theme or preference.
+
+**Using the `pyScope.changeColor` Command:**
+Run the command from the command palette (`Ctrl+Shift+P`) and choose from a list of preset colors or select "Custom..." to open a color picker.
+
+![Change color using command](./media/samples/color-changer.mp4)
+
+### Customizable Highlight Opacity
+
+You can also adjust the opacity of the block highlight and the first/last line highlight separately.
+
+**Using the `pyScope.changeOpacity` Command:**
+Run the command from the command palette and choose which opacity setting you want to change. Then, enter a value between 0 and 1.
+
+![Change opacity using command](./media/samples/highlight-opacity.mp4)
+
+### Block Selection
+
+PyScope also allows you to select the entire code block with a single command.
+
+**Using the `pyScope.selectBlock` Command:**
+Run the command from the command palette to select the current block. You can run it multiple times to select parent blocks in a nested structure.
+
+**Using the `pyScope.undoBlockSelection` Command:**
+Run this command to undo the last block selection.
+
+![Block selection using commands](./media/samples/block-selector.mp4)
 
 ---
 
@@ -51,32 +80,6 @@ It’s like having **X-ray vision** for your Python code! 👓
 3. Search for **PyScope**.
 4. Click **Install**.
 5. Open a Python file and watch the magic happen! ✨
-
----
-
-## Configuration ⚙️
-
-Customize PyScope to fit your style!
-You can change the color of the highlighted blocksby providing RGB values of the color you like. You can do this from the settings
-
-### How to change in the settings
-
-1. Open settings `Ctrl+Comma` for windows, `Cmd+Comma` for mac
-2. Search for `pyScope` and look for `Block Highlight Color`
-3. Provide you desired RGB value in that field
-4. You can leave the field blank to use the default color
-
-![Change color from settings](./images/samples/settings-color-change.gif)
-
-Or open `settings.json` and look for `pyScope.blockHighlightColor` and you can configure the color there too.
-
-```json
-"pyScope.blockHighlightColor": "27, 153, 5",
-```
-
-or by using the command `pyScope.changeColor`.
-
-![Change color using command](./images/samples/cmd-color-change.gif)
 
 ---
 
@@ -114,4 +117,6 @@ Happy coding! 🎉🐍
 
 **P.S.** If you love PyScope, share it with your friends and spread the word! 🌍✨
 
-# **\_**Nothing great ever came that easy**\_**
+---
+
+# **\_\_Nothing great ever came that easy\_\_**
