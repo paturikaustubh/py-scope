@@ -119,4 +119,4 @@ Happy coding! 🎉🐍
 
 ---
 
-# **\_\_Nothing great ever came that easy\_\_**
+# _**Nothing great ever came that easy**_
