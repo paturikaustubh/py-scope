@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.10.1] - 08 Sep, 2025
+
+### Updated
+
+- Sample videos in README.md
+
 ## [0.10.0] - 08 Sep, 2025
 
 ### Changed
