@@ -5,6 +5,7 @@ import {
   createFirstLastLineHighlight,
   createFirstLineHighlight,
   createLastLineHighlight,
+  createSingleLineBlockHighlight,
 } from "./styles";
 
 import { selectionStack } from "../utils/selectionStack";
@@ -17,6 +18,7 @@ export class Highlighter {
     firstLine: vscode.TextEditorDecorationType;
     firstLastLine: vscode.TextEditorDecorationType;
     lastLine: vscode.TextEditorDecorationType;
+    singleLineBlock: vscode.TextEditorDecorationType;
   };
   private currentBlockData?: {
     firstLine: number;
@@ -64,6 +66,10 @@ export class Highlighter {
         firstLastOpacity
       ),
       lastLine: createLastLineHighlight(highlightColor, firstLastOpacity),
+      singleLineBlock: createSingleLineBlockHighlight(
+        highlightColor,
+        firstLastOpacity
+      ),
     };
   }
 
@@ -85,6 +91,7 @@ export class Highlighter {
     this.decorations.firstLine.dispose();
     this.decorations.firstLastLine.dispose();
     this.decorations.lastLine.dispose();
+    this.decorations.singleLineBlock.dispose();
   }
 
   public resetSelectionState(editor: vscode.TextEditor) {
@@ -165,6 +172,7 @@ export class Highlighter {
     editor.setDecorations(this.decorations.firstLine, []);
     editor.setDecorations(this.decorations.firstLastLine, []);
     editor.setDecorations(this.decorations.lastLine, []);
+    editor.setDecorations(this.decorations.singleLineBlock, []);
   }
 
   private highlightBlock(editor: vscode.TextEditor, currentLine: number) {
@@ -204,6 +212,24 @@ export class Highlighter {
     console.log(
       `highlightRange: headerStart=${headerStart}, headerEnd=${headerEnd}, blockEnd=${blockEnd}`
     );
+
+    // Handle single-line blocks separately.
+    if (headerStart === blockEnd) {
+      const singleLineRange = new vscode.Range(
+        headerStart,
+        0,
+        blockEnd,
+        Number.MAX_SAFE_INTEGER
+      );
+      editor.setDecorations(this.decorations.singleLineBlock, [singleLineRange]);
+
+      // Ensure other decorations are not applied.
+      editor.setDecorations(this.decorations.block, []);
+      editor.setDecorations(this.decorations.firstLine, []);
+      editor.setDecorations(this.decorations.firstLastLine, []);
+      editor.setDecorations(this.decorations.lastLine, []);
+      return;
+    }
 
     // Highlight the block body (if any) with lower opacity.
     if (headerEnd + 1 <= blockEnd - 1) {
