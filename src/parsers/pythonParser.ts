@@ -48,7 +48,7 @@ function tryGetBlockHeader(
     return undefined;
   }
   // If the code portion of the first line ends with ":", we’re done.
-  if (codePart.endsWith(":")) {
+  if (codePart.includes(":")) {
     // Use the full line to determine the colon position.
     const colonPosition = firstLineText.lastIndexOf(":") + 1;
     return { startLine, colonLine: startLine, colonPosition };
