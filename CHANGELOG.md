@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.10.2] - 08 Sep, 2025
+
+### Fixed
+
+- Made the parser logic for multi-line headers more robust, fixing several edge cases where highlighting would behave incorrectly.
+
 ## [0.10.1] - 08 Sep, 2025
 
 ### Updated

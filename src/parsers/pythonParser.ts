@@ -47,7 +47,8 @@ function tryGetBlockHeader(
   if (!isKeyword) {
     return undefined;
   }
-  const baseIndent = document.lineAt(startLine).firstNonWhitespaceCharacterIndex;
+  const baseIndent =
+    document.lineAt(startLine).firstNonWhitespaceCharacterIndex;
 
   // If the code portion of the first line contains ":", we’re done.
   if (codePart.includes(":")) {
@@ -62,16 +63,19 @@ function tryGetBlockHeader(
     currentLine++;
     const line = document.lineAt(currentLine);
     const lineIndent = line.firstNonWhitespaceCharacterIndex;
+    const lineText = line.text;
+    const codePartLine = lineText.split(/#.*/)[0].trim();
 
     // If the line is not empty and its indentation is not greater than the base indentation,
     // it's not part of a multi-line header, so we stop.
     if (!line.isEmptyOrWhitespace && lineIndent <= baseIndent) {
-      break;
+      // ...and it's NOT the line that contains the colon we're looking for...
+      if (!codePartLine.endsWith(":")) {
+        // ...then it must be a new statement, so stop.
+        break;
+      }
     }
 
-    const lineText = line.text;
-    // Only consider the code portion of the line (ignoring comments).
-    const codePartLine = lineText.split(/#.*/)[0].trim();
     if (codePartLine.endsWith(":")) {
       const colonPosition = lineText.lastIndexOf(":") + 1;
       return { startLine, colonLine: currentLine, colonPosition };

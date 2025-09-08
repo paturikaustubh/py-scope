@@ -2,6 +2,14 @@
 
 ---
 
+## **v0.10.2** — _08 Sep 2025_
+
+**Bug Fixes**
+
+- Minor bug fixes and improvements to highlighting accuracy.
+
+---
+
 ## **v0.10.0** — _08 Sep 2025_
 
 **Documentation**
