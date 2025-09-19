@@ -2,6 +2,14 @@
 
 ---
 
+## **v0.10.3** — _19 Sep 2025_
+
+**Bug Fixes & Stability**
+
+- Minor bug fixes and improvements to highlighting accuracy and responsiveness.
+
+---
+
 ## **v0.10.2** — _08 Sep 2025_
 
 **Bug Fixes**
