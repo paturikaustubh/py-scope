@@ -28,10 +28,12 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   // Register event listeners.
-  const debouncedUpdate = debounce((editor: vscode.TextEditor) => {
+  const updateDecorations = (editor: vscode.TextEditor) => {
     highlighter.invalidateBlockTree();
     highlighter.updateDecorations(editor);
-  }, 100);
+  };
+
+  const debouncedUpdate = debounce(updateDecorations, 100);
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeTextDocument((e) => {
@@ -39,7 +41,15 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.activeTextEditor &&
         e.document === vscode.window.activeTextEditor.document
       ) {
-        debouncedUpdate(vscode.window.activeTextEditor);
+        // If there's more than one change, it's likely a complex action like moving lines.
+        // In this case, update synchronously to prevent smearing, accepting a brief flicker.
+        if (e.contentChanges.length > 1) {
+          highlighter.clearAllDecorations(vscode.window.activeTextEditor);
+          updateDecorations(vscode.window.activeTextEditor);
+        } else {
+          // For normal typing, use a debounce to prevent performance issues and flickering.
+          debouncedUpdate(vscode.window.activeTextEditor);
+        }
       }
     }),
     vscode.window.onDidChangeTextEditorSelection((e) => {

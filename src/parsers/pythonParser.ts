@@ -66,6 +66,26 @@ function tryGetBlockHeader(
     const lineText = line.text;
     const codePartLine = lineText.split(/#.*/)[0].trim();
 
+    if (!line.isEmptyOrWhitespace) {
+      let isNewLineKeyword = false;
+      for (const keyword of BLOCK_KEYWORDS) {
+        if (
+          codePartLine.startsWith(keyword + " ") ||
+          codePartLine.startsWith(keyword + ":") ||
+          codePartLine === keyword
+        ) {
+          isNewLineKeyword = true;
+          break;
+        }
+      }
+
+      // If a new line starts with a block keyword at the same or lower indentation,
+      // it's a new block, not a continuation of the current one.
+      if (isNewLineKeyword && lineIndent <= baseIndent) {
+        return undefined;
+      }
+    }
+
     // If the line is not empty and its indentation is not greater than the base indentation,
     // it's not part of a multi-line header, so we stop.
     if (!line.isEmptyOrWhitespace && lineIndent <= baseIndent) {

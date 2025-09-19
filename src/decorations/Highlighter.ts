@@ -100,7 +100,6 @@ export class Highlighter {
     // or if the selection is empty
     if (now - this.lastSelectionTimestamp > 200 || editor.selection.isEmpty) {
       if (selectionStack.length > 0) {
-        console.log("Selection chain broken, clearing selection stack.");
         selectionStack.length = 0; // Clear the stack
         this.updateDecorations(editor); // Update decorations to re-render highlighting
       }
@@ -167,12 +166,13 @@ export class Highlighter {
     }
   }
 
-  private clearAllDecorations(editor: vscode.TextEditor) {
+  public clearAllDecorations(editor: vscode.TextEditor) {
     editor.setDecorations(this.decorations.block, []);
     editor.setDecorations(this.decorations.firstLine, []);
     editor.setDecorations(this.decorations.firstLastLine, []);
     editor.setDecorations(this.decorations.lastLine, []);
     editor.setDecorations(this.decorations.singleLineBlock, []);
+    this.currentBlockData = undefined;
   }
 
   private highlightBlock(editor: vscode.TextEditor, currentLine: number) {
@@ -209,10 +209,6 @@ export class Highlighter {
     headerEnd: number,
     blockEnd: number
   ) {
-    console.log(
-      `highlightRange: headerStart=${headerStart}, headerEnd=${headerEnd}, blockEnd=${blockEnd}`
-    );
-
     // Handle single-line blocks separately.
     if (headerStart === blockEnd) {
       const singleLineRange = new vscode.Range(
@@ -221,7 +217,9 @@ export class Highlighter {
         blockEnd,
         Number.MAX_SAFE_INTEGER
       );
-      editor.setDecorations(this.decorations.singleLineBlock, [singleLineRange]);
+      editor.setDecorations(this.decorations.singleLineBlock, [
+        singleLineRange,
+      ]);
 
       // Ensure other decorations are not applied.
       editor.setDecorations(this.decorations.block, []);
@@ -387,12 +385,6 @@ export class Highlighter {
       if (!this.selectionChainEnded) {
         // This check is crucial here.
         nextNode = blockTree.findNodeAtLine(editor.selection.active.line);
-        if (nextNode) {
-          console.log(
-            "selectNextBlock: Found initial node:",
-            nextNode.block.openRange.start.line
-          );
-        }
       }
     }
 

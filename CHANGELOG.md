@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.10.3] - 19 Sep, 2025
+
+### Fixed
+
+- Fixed a bug where incomplete `if` statements were being incorrectly identified as multi-line block headers.
+- Resolved an issue where the keyword "if" was not being correctly identified by the parser.
+- Fixed a bug where moving lines with "alt+up/down arrow" would cause "smearing" of highlights.
+
 ## [0.10.2] - 08 Sep, 2025
 
 ### Fixed
