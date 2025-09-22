@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.10.4] - 22 Sep, 2025
+
+### Fixed
+
+- Bug related to falsly identifying end of first line(s). Used to consider the type hinting colon as end colon, fixed it.
+- Unformatted multiple first lines inconsistent highlighting.
+
 ## [0.10.3] - 19 Sep, 2025
 
 ### Fixed

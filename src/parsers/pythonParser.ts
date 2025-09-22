@@ -33,73 +33,75 @@ const BLOCK_KEYWORDS = [
 
 /**
  * Attempts to detect a block header that might span multiple lines.
+ * This version correctly handles parentheses to detect multi-line headers.
  */
 function tryGetBlockHeader(
   document: vscode.TextDocument,
   startLine: number
 ): { startLine: number; colonLine: number; colonPosition: number } | undefined {
   const firstLineText = document.lineAt(startLine).text;
-  // Get the first line's text and its code part (ignoring comments).
-  const codePart = firstLineText.split(/#.*/)[0].trim();
+  const firstLineCodePart = firstLineText.split(/#.*/)[0].trim();
+
   const isKeyword = BLOCK_KEYWORDS.some((keyword) =>
-    new RegExp(`^\\s*${keyword}\\b`).test(codePart)
+    new RegExp(`^${keyword}\\b`).test(firstLineCodePart)
   );
   if (!isKeyword) {
     return undefined;
   }
-  const baseIndent =
-    document.lineAt(startLine).firstNonWhitespaceCharacterIndex;
 
-  // If the code portion of the first line contains ":", we’re done.
-  if (codePart.includes(":")) {
-    // Use the full line to determine the colon position.
-    const colonPosition = firstLineText.lastIndexOf(":") + 1;
-    return { startLine, colonLine: startLine, colonPosition };
-  }
+  let parenLevel = 0;
+  let lineNum = startLine;
 
-  // Otherwise, accumulate subsequent lines until we find a line whose code portion ends with ":".
-  let currentLine = startLine;
-  while (currentLine < document.lineCount - 1) {
-    currentLine++;
-    const line = document.lineAt(currentLine);
-    const lineIndent = line.firstNonWhitespaceCharacterIndex;
+  while (lineNum < document.lineCount) {
+    const line = document.lineAt(lineNum);
     const lineText = line.text;
-    const codePartLine = lineText.split(/#.*/)[0].trim();
+    const codePart = lineText.split(/#.*/)[0];
+    const trimmedCodePart = codePart.trim();
 
-    if (!line.isEmptyOrWhitespace) {
-      let isNewLineKeyword = false;
-      for (const keyword of BLOCK_KEYWORDS) {
-        if (
-          codePartLine.startsWith(keyword + " ") ||
-          codePartLine.startsWith(keyword + ":") ||
-          codePartLine === keyword
-        ) {
-          isNewLineKeyword = true;
-          break;
+    if (parenLevel === 0 && lineNum > startLine) {
+      const baseIndent =
+        document.lineAt(startLine).firstNonWhitespaceCharacterIndex;
+      const currentIndent = line.firstNonWhitespaceCharacterIndex;
+
+      if (!line.isEmptyOrWhitespace && currentIndent <= baseIndent) {
+        // Check if this line starts a new block
+        const isNewLineKeyword = BLOCK_KEYWORDS.some((keyword) =>
+          new RegExp(`^${keyword}\\b`).test(trimmedCodePart)
+        );
+        if (isNewLineKeyword) {
+          return undefined; // It's a new sibling block, so stop.
+        }
+
+        // If it's not a new keyword, but same/lower indent, it must be the end of the header.
+        if (!trimmedCodePart.endsWith(":")) {
+          return undefined; // New statement, not a continuation
         }
       }
+    }
 
-      // If a new line starts with a block keyword at the same or lower indentation,
-      // it's a new block, not a continuation of the current one.
-      if (isNewLineKeyword && lineIndent <= baseIndent) {
-        return undefined;
+    // Update parenthesis level
+    for (const char of codePart) {
+      if (char === "(" || char === "[" || char === "{") {
+        parenLevel++;
+      } else if (char === ")" || char === "]" || char === "}") {
+        parenLevel--;
       }
     }
 
-    // If the line is not empty and its indentation is not greater than the base indentation,
-    // it's not part of a multi-line header, so we stop.
-    if (!line.isEmptyOrWhitespace && lineIndent <= baseIndent) {
-      // ...and it's NOT the line that contains the colon we're looking for...
-      if (!codePartLine.endsWith(":")) {
-        // ...then it must be a new statement, so stop.
-        break;
-      }
+    if (trimmedCodePart.endsWith(":") && parenLevel === 0) {
+      const result = {
+        startLine,
+        colonLine: lineNum,
+        colonPosition: lineText.lastIndexOf(":") + 1,
+      };
+      return result;
     }
 
-    if (codePartLine.endsWith(":")) {
-      const colonPosition = lineText.lastIndexOf(":") + 1;
-      return { startLine, colonLine: currentLine, colonPosition };
+    if (lineNum > startLine + 20) {
+      return undefined;
     }
+
+    lineNum++;
   }
   return undefined;
 }
@@ -202,7 +204,8 @@ export function parsePythonBlocks(document: vscode.TextDocument): CodeBlock[] {
       ) {
         const closedBlock = stack.pop()!;
         const endLine = lineNum - 1;
-        blocks.push(createBlock(document, closedBlock, endLine));
+        const newBlock = createBlock(document, closedBlock, endLine);
+        blocks.push(newBlock);
       }
     }
     // Check if the current line (or a multi-line header) starts a new block.
@@ -227,7 +230,8 @@ export function parsePythonBlocks(document: vscode.TextDocument): CodeBlock[] {
   while (stack.length > 0) {
     const closedBlock = stack.pop()!;
     const endLine = document.lineCount - 1;
-    blocks.push(createBlock(document, closedBlock, endLine));
+    const newBlock = createBlock(document, closedBlock, endLine);
+    blocks.push(newBlock);
   }
   return blocks;
 }
