@@ -23,7 +23,7 @@ export class BlockTree {
       openRange: new Range(new Position(0, 0), new Position(0, 0)),
       closeRange: new Range(
         new Position(Infinity, 0),
-        new Position(Infinity, 0),
+        new Position(Infinity, 0)
       ),
       headerEndLine: -1,
     };

@@ -2,6 +2,14 @@
 
 ---
 
+## **v0.10.4** - _22 Sep 2025_
+
+**Buf fixed & Stability**
+
+- Minor bug fixed regarding highlighting logic.
+
+---
+
 ## **v0.10.3** — _19 Sep 2025_
 
 **Bug Fixes & Stability**

@@ -316,23 +316,6 @@ export class Highlighter {
     return undefined;
   }
 
-  private findInnerMostBlock(
-    blocks: CodeBlock[],
-    cursorLine: number
-  ): CodeBlock | undefined {
-    return blocks.reduce((prev, current) => {
-      const inBlock =
-        cursorLine >= current.openRange.start.line &&
-        cursorLine <= current.closeRange.end.line;
-      return inBlock &&
-        (!prev ||
-          current.closeRange.end.line - current.openRange.start.line <
-            prev.closeRange.end.line - prev.openRange.start.line)
-        ? current
-        : prev;
-    }, undefined as CodeBlock | undefined);
-  }
-
   public getCurrentBlockRange(
     editor: vscode.TextEditor
   ): vscode.Range | undefined {
