@@ -1,0 +1,43 @@
+Parsing blocks in repro_case.py...
+Found 4 blocks in range 680-740:
+- Line 722: if not task_id:
+  HeaderEnd: 722, Close: 725
+- Line 727: if annotations:
+  HeaderEnd: 727, Close: 728
+- Line 720: for task in tasks_list:
+  HeaderEnd: 720, Close: 730
+- Line 681: def get_metadata_output(self, project_id: int) -> 
+  HeaderEnd: 681, Close: 732
+
+String detection check:
+Line 680 [InString: false]: 
+Line 681 [InString: false]: def get_metadata_output(self, project_id
+Line 682 [InString: false]: """
+Line 683 [InString: true]: Build a tree-structured metadata JSON fo
+Line 684 [InString: true]: {
+Line 685 [InString: true]: "project": { ... },
+Line 686 [InString: true]: "tasks": [
+Line 687 [InString: true]: {
+Line 688 [InString: true]: "task": { ... },
+Line 689 [InString: true]: "annotations": [ ... ]
+Line 690 [InString: true]: },
+Line 691 [InString: true]: ...
+Line 692 [InString: true]: ]
+Line 693 [InString: true]: }
+Line 694 [InString: true]: 
+Line 695 [InString: true]: Calls the Utility methods:
+Line 696 [InString: true]: - get_project
+Line 697 [InString: true]: - get_tasks
+Line 698 [InString: true]: - get_annotations_for_task
+Line 699 [InString: true]: 
+Line 700 [InString: true]: Returns:
+Line 701 [InString: true]: A tuple (metadata, annotation_flag) wher
+Line 702 [InString: true]: if *any* task had non-empty annotations.
+Line 703 [InString: true]: """
+Line 704 [InString: false]: LoggerUtils.info(
+Line 705 [InString: false]: f"Building metadata graph for project {p
+Line 706 [InString: false]: )
+Line 707 [InString: false]: 
+Line 708 [InString: false]: # Fetch project details
+Line 709 [InString: false]: project_info = self.get_project(project_
+Line 710 [InString: false]: 
