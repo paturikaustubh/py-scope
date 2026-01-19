@@ -16,3 +16,4 @@ coverage/
 build/
 tmp/
 GEMINI.md
+src/test*/
