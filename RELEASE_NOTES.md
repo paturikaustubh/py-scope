@@ -2,6 +2,14 @@
 
 ---
 
+## **v0.10.5** - _19 Jan 2026_
+
+**Bug Fixes**
+
+- Fixed issues with multi-line function definitions and docstrings interfering with block detection.
+
+---
+
 ## **v0.10.4** - _22 Sep 2025_
 
 **Buf fixed & Stability**

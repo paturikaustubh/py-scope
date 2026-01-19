@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.10.5] - 19 Jan, 2026
+
+### Fixed
+
+- Fixed a bug where keywords (e.g., `if`, `for`) inside docstrings/strings were incorrectly parsed as block headers ("ghost blocks"), causing subsequent code to be mis-parsed.
+- Fixed a bug where multi-line function headers (e.g. split arguments) were closing prematurely.
+
 ## [0.10.4] - 22 Sep, 2025
 
 ### Fixed

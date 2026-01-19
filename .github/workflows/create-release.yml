@@ -39,12 +39,29 @@ jobs:
           echo "$RELEASE_NOTES" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      # 4. Create a GitHub release
+      # 4. Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 5. Install dependencies and VSCE
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install -g @vscode/vsce
+
+      # 6. Package extension
+      - name: Package Extension
+        run: vsce package
+
+      # 7. Create a GitHub release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.version }}
           name: "Release v${{ env.version }}"
           body: ${{ env.release_notes }}
+          files: "*.vsix"
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
