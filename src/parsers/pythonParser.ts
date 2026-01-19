@@ -37,13 +37,13 @@ const BLOCK_KEYWORDS = [
  */
 function tryGetBlockHeader(
   document: vscode.TextDocument,
-  startLine: number
+  startLine: number,
 ): { startLine: number; colonLine: number; colonPosition: number } | undefined {
   const firstLineText = document.lineAt(startLine).text;
   const firstLineCodePart = firstLineText.split(/#.*/)[0].trim();
 
   const isKeyword = BLOCK_KEYWORDS.some((keyword) =>
-    new RegExp(`^${keyword}\\b`).test(firstLineCodePart)
+    new RegExp(`^${keyword}\\b`).test(firstLineCodePart),
   );
   if (!isKeyword) {
     return undefined;
@@ -54,56 +54,71 @@ function tryGetBlockHeader(
 
   while (lineNum < document.lineCount) {
     const line = document.lineAt(lineNum);
-    const lineText = line.text;
-    const codePart = lineText.split(/#.*/)[0];
-    const trimmedCodePart = codePart.trim();
+    const codePart = line.text.split(/#.*/)[0];
+    const trimmed = codePart.trim();
 
-    if (parenLevel === 0 && lineNum > startLine) {
-      const baseIndent =
-        document.lineAt(startLine).firstNonWhitespaceCharacterIndex;
-      const currentIndent = line.firstNonWhitespaceCharacterIndex;
-
-      if (!line.isEmptyOrWhitespace && currentIndent <= baseIndent) {
-        // Check if this line starts a new block
-        const isNewLineKeyword = BLOCK_KEYWORDS.some((keyword) =>
-          new RegExp(`^${keyword}\\b`).test(trimmedCodePart)
-        );
-        if (isNewLineKeyword) {
-          return undefined; // It's a new sibling block, so stop.
-        }
-
-        // If it's not a new keyword, but same/lower indent, it must be the end of the header.
-        if (!trimmedCodePart.endsWith(":")) {
-          return undefined; // New statement, not a continuation
-        }
-      }
-    }
-
-    // Update parenthesis level
-    for (const char of codePart) {
-      if (char === "(" || char === "[" || char === "{") {
+    // Update parentheses/bracket depth
+    for (const ch of codePart) {
+      if ("([{".includes(ch)) {
         parenLevel++;
-      } else if (char === ")" || char === "]" || char === "}") {
+      } else if (")]}".includes(ch)) {
         parenLevel--;
       }
     }
 
-    if (trimmedCodePart.endsWith(":") && parenLevel === 0) {
-      const result = {
-        startLine,
-        colonLine: lineNum,
-        colonPosition: lineText.lastIndexOf(":") + 1,
-      };
-      return result;
+    // Detect colon marking header end
+    if (trimmed.endsWith(":") && parenLevel === 0) {
+      const colonPos = line.text.lastIndexOf(":") + 1;
+
+      // ✅ Skip false positives (lines that end with colon but have nothing else below)
+      const nextLine =
+        lineNum + 1 < document.lineCount ? document.lineAt(lineNum + 1) : null;
+      if (
+        !nextLine ||
+        nextLine.isEmptyOrWhitespace ||
+        nextLine.firstNonWhitespaceCharacterIndex <=
+          line.firstNonWhitespaceCharacterIndex
+      ) {
+        // No indented block after colon → treat as incomplete
+        return undefined;
+      }
+
+      return { startLine, colonLine: lineNum, colonPosition: colonPos };
     }
 
+    // Prevent runaway scan
     if (lineNum > startLine + 20) {
       return undefined;
     }
-
     lineNum++;
   }
+
   return undefined;
+}
+
+function findBlockEnd(
+  document: vscode.TextDocument,
+  startLine: number,
+  baseIndent: number,
+): number {
+  const lineCount = document.lineCount;
+
+  for (let i = startLine + 1; i < lineCount; i++) {
+    const line = document.lineAt(i);
+    const trimmed = line.text.trim();
+
+    // Skip comments or empty lines
+    if (trimmed === "" || trimmed.startsWith("#")) {
+      continue;
+    }
+
+    const indent = line.firstNonWhitespaceCharacterIndex;
+    if (indent <= baseIndent) {
+      return i - 1;
+    }
+  }
+
+  return lineCount - 1;
 }
 
 /**
@@ -148,7 +163,7 @@ function computeInStringArray(document: vscode.TextDocument): boolean[] {
 function createBlock(
   document: vscode.TextDocument,
   block: BlockStackItem,
-  endLine: number
+  endLine: number,
 ): CodeBlock {
   let lastContentLine = endLine;
   while (lastContentLine > block.startLine) {
@@ -164,13 +179,13 @@ function createBlock(
       block.startLine,
       block.colonPosition,
       block.startLine,
-      block.colonPosition
+      block.colonPosition,
     ),
     closeRange: new vscode.Range(
       lastContentLine,
       line.text.length,
       lastContentLine,
-      line.text.length
+      line.text.length,
     ),
     headerEndLine: block.headerEndLine,
   };
@@ -203,26 +218,33 @@ export function parsePythonBlocks(document: vscode.TextDocument): CodeBlock[] {
         currentIndent <= stack[stack.length - 1].indent
       ) {
         const closedBlock = stack.pop()!;
-        const endLine = lineNum - 1;
+        const endLine = findBlockEnd(
+          document,
+          closedBlock.headerEndLine,
+          closedBlock.indent,
+        );
         const newBlock = createBlock(document, closedBlock, endLine);
         blocks.push(newBlock);
       }
     }
     // Check if the current line (or a multi-line header) starts a new block.
-    const headerInfo = tryGetBlockHeader(document, lineNum);
-    if (headerInfo) {
-      const baseIndent = document.lineAt(
-        headerInfo.startLine
-      ).firstNonWhitespaceCharacterIndex;
-      stack.push({
-        indent: baseIndent,
-        startLine: headerInfo.startLine,
-        colonPosition: headerInfo.colonPosition,
-        headerEndLine: headerInfo.colonLine,
-      });
-      // Skip directly to the line after the header.
-      lineNum = headerInfo.colonLine + 1;
-      continue;
+    // FIX: Do not parse headers if we are inside a string.
+    if (!inStringArr[lineNum]) {
+      const headerInfo = tryGetBlockHeader(document, lineNum);
+      if (headerInfo) {
+        const baseIndent = document.lineAt(
+          headerInfo.startLine,
+        ).firstNonWhitespaceCharacterIndex;
+        stack.push({
+          indent: baseIndent,
+          startLine: headerInfo.startLine,
+          colonPosition: headerInfo.colonPosition,
+          headerEndLine: headerInfo.colonLine,
+        });
+        // Skip directly to the line after the header.
+        lineNum = headerInfo.colonLine + 1;
+        continue;
+      }
     }
     lineNum++;
   }
