@@ -70,13 +70,20 @@ function tryGetBlockHeader(
     if (trimmed.endsWith(":") && parenLevel === 0) {
       const colonPos = line.text.lastIndexOf(":") + 1;
 
-      // ✅ Skip false positives (lines that end with colon but have nothing else below)
-      const nextLine =
-        lineNum + 1 < document.lineCount ? document.lineAt(lineNum + 1) : null;
+      // ✅ Skip false positives (lines that end with colon but have nothing indented below)
+      // Advance past any empty/whitespace-only lines to find the first real body line.
+      let peekLine = lineNum + 1;
+      while (
+        peekLine < document.lineCount &&
+        document.lineAt(peekLine).isEmptyOrWhitespace
+      ) {
+        peekLine++;
+      }
+      const nextNonEmptyLine =
+        peekLine < document.lineCount ? document.lineAt(peekLine) : null;
       if (
-        !nextLine ||
-        nextLine.isEmptyOrWhitespace ||
-        nextLine.firstNonWhitespaceCharacterIndex <=
+        !nextNonEmptyLine ||
+        nextNonEmptyLine.firstNonWhitespaceCharacterIndex <=
           line.firstNonWhitespaceCharacterIndex
       ) {
         // No indented block after colon → treat as incomplete
