@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { Command } from "./Command";
-import { selectionStack } from "../utils/selectionStack";
 import { Highlighter } from "../decorations/Highlighter";
+import { selectionStack } from "../utils/selectionStack";
 
 export class UndoBlockSelectionCommand extends Command {
   constructor(private highlighter: Highlighter) {
@@ -18,29 +18,30 @@ export class UndoBlockSelectionCommand extends Command {
       this.highlighter.lastSelectionTimestamp = Date.now();
 
       if (selectionStack.length > 0) {
-        const previousState = selectionStack.pop();
-        if (previousState) {
-          // Restore the highlighter's state FIRST
-          this.highlighter.selectedNode = previousState.selectedNode;
-          this.highlighter.selectionChainEnded = false; // Allow new selections
+        const prev = selectionStack.pop()!;
 
-          // Then restore the selection in the editor
-          editor.selections = previousState.selections;
+        // Restore the highlighter's internal node pointer FIRST — if we set
+        // editor.selections before this, the selection-change event fires and
+        // resetSelectionState() could clear the node we're about to restore.
+        this.highlighter.selectedNode = prev.selectedNode;
+        this.highlighter.selectionChainEnded = false;
 
-          // Reveal the primary selection
-          const primarySelection = previousState.selections[0];
-          if (primarySelection) {
-            editor.revealRange(
-              new vscode.Range(primarySelection.start, primarySelection.end),
-              vscode.TextEditorRevealType.InCenterIfOutsideViewport,
-            );
-          }
+        editor.selections = prev.selections;
+
+        // Scroll to the restored selection so the user knows where they landed.
+        const primary = prev.selections[0];
+        if (primary) {
+          editor.revealRange(
+            new vscode.Range(primary.start, primary.end),
+            vscode.TextEditorRevealType.InCenterIfOutsideViewport,
+          );
         }
       } else {
-        // If the stack is empty, reset the highlighter's selection state
+        // Stack is empty — nothing to undo, just clean up any lingering state.
         this.highlighter.resetSelectionState(editor);
         vscode.window.showWarningMessage("No more selections to undo.");
       }
+
       this.highlighter.updateDecorations(editor);
     });
   }

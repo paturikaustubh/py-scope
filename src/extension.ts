@@ -6,70 +6,81 @@ import { ChangeOpacityCommand } from "./commands/ChangeOpacityCommand";
 import { SelectBlockCommand } from "./commands/SelectBlockCommand";
 import { UndoBlockSelectionCommand } from "./commands/UndoBlockSelectionCommand";
 
+// Module-level so `deactivate()` can reach it without closing over a stale ref.
 let highlighter: Highlighter;
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log("PyScope extension activated");
+  console.log("PyScope activated");
 
-  // Create our Highlighter instance.
   highlighter = new Highlighter();
 
-  // Instantiate our command objects.
+  // ── Commands ────────────────────────────────────────────────────────────────
   const commands = [
     new ChangeColorCommand(context, highlighter),
     new ChangeOpacityCommand(highlighter),
     new SelectBlockCommand(highlighter),
     new UndoBlockSelectionCommand(highlighter),
   ];
+  commands.forEach((cmd) => context.subscriptions.push(cmd.register()));
 
-  // Register all commands.
-  commands.forEach((command) => {
-    context.subscriptions.push(command.register());
-  });
+  // ── Event handlers ──────────────────────────────────────────────────────────
 
-  // Register event listeners.
-  const updateDecorations = (editor: vscode.TextEditor) => {
+  // Called when the document text actually changes — we need to discard the
+  // cached block tree because the line structure may have shifted.
+  const onDocumentChange = (editor: vscode.TextEditor) => {
     highlighter.invalidateBlockTree();
     highlighter.updateDecorations(editor);
   };
 
-  const debouncedUpdate = debounce(updateDecorations, 100);
+  // Called when only the cursor/selection changes — the document is untouched,
+  // so the cached block tree is still valid and we skip invalidation.
+  const onCursorChange = (editor: vscode.TextEditor) => {
+    highlighter.updateDecorations(editor);
+  };
+
+  const debouncedDocChange = debounce(onDocumentChange, 100);
+  const debouncedCursorChange = debounce(onCursorChange, 100);
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeTextDocument((e) => {
-      if (
-        vscode.window.activeTextEditor &&
-        e.document === vscode.window.activeTextEditor.document
-      ) {
-        // If there's more than one change, it's likely a complex action like moving lines.
-        // In this case, update synchronously to prevent smearing, accepting a brief flicker.
-        if (e.contentChanges.length > 1) {
-          highlighter.clearAllDecorations(vscode.window.activeTextEditor);
-          updateDecorations(vscode.window.activeTextEditor);
-        } else {
-          // For normal typing, use a debounce to prevent performance issues and flickering.
-          debouncedUpdate(vscode.window.activeTextEditor);
-        }
+      const editor = vscode.window.activeTextEditor;
+      if (!editor || e.document !== editor.document) {
+        return;
+      }
+
+      // Alt+Up / Alt+Down (move line) produces multiple content changes at once.
+      // Running synchronously here prevents the highlight from "smearing" across
+      // the old position for a frame before the debounce fires.
+      if (e.contentChanges.length > 1) {
+        highlighter.clearAllDecorations(editor);
+        onDocumentChange(editor);
+      } else {
+        debouncedDocChange(editor);
       }
     }),
+
     vscode.window.onDidChangeTextEditorSelection((e) => {
-      if (e.textEditor) {
-        const now = Date.now();
-        if (now - highlighter.lastSelectionTimestamp > 100) {
-          highlighter.resetSelectionState(e.textEditor);
-        }
-        debouncedUpdate(e.textEditor);
+      if (!e.textEditor) {
+        return;
       }
+      // If the cursor moved far enough in time from the last Ctrl+Alt+A, treat
+      // it as the user breaking out of the block-selection chain.
+      if (Date.now() - highlighter.lastSelectionTimestamp > 100) {
+        highlighter.resetSelectionState(e.textEditor);
+      }
+      debouncedCursorChange(e.textEditor);
     }),
+
     vscode.window.onDidChangeActiveTextEditor((editor) => {
       if (editor) {
-        debouncedUpdate(editor);
+        // Tab switch — cursor position hasn't changed so tree is still valid.
+        debouncedCursorChange(editor);
       }
-    })
+    }),
   );
 }
 
 export function deactivate() {
-  console.log("PyScope extension deactivated");
+  console.log("PyScope deactivated");
   highlighter.dispose();
 }
