@@ -1,5 +1,22 @@
 # Change Log
 
+## [0.11.1] - 02 Mar, 2026
+
+### Updated
+
+- Updated CHANGELOG.md and RELEASE_NOTES.md
+
+## [0.11.0] - 02 Mar, 2026
+
+### Changed
+
+- Refactored core logic for improved maintainability.
+
+### Fixed
+
+- Fixed an issue where single-line blocks (e.g., `def func(): pass`) were not being correctly detected.
+- Fixed a bug where blocks were not detected if they started with an empty line.
+
 ## [0.10.5] - 19 Jan, 2026
 
 ### Fixed
