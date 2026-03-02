@@ -2,6 +2,23 @@
 
 ---
 
+## **v0.11.1** - _02 Mar 2026_
+
+**Updated**
+
+- Updated CHANGELOG.md and RELEASE_NOTES.md
+
+---
+
+## **v0.11.0** - _02 Mar 2026_
+
+**Bug Fixes & Refactoring**
+
+- **Improved Block Detection:** Fixed issues with single-line block detection and cases where blocks were missed due to starting with an empty line.
+- **Under-the-hood Refactoring:** Core logic has been refactored for better performance and maintainability.
+
+---
+
 ## **v0.10.5** - _19 Jan 2026_
 
 **Bug Fixes**
