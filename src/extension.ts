@@ -28,7 +28,6 @@ export function activate(context: vscode.ExtensionContext) {
   // Called when the document text actually changes — we need to discard the
   // cached block tree because the line structure may have shifted.
   const onDocumentChange = (editor: vscode.TextEditor) => {
-    highlighter.invalidateBlockTree();
     highlighter.updateDecorations(editor);
   };
 
@@ -43,6 +42,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeTextDocument((e) => {
+      highlighter.invalidateBlockTree(e.document.uri.toString());
       const editor = vscode.window.activeTextEditor;
       if (!editor || e.document !== editor.document) {
         return;
@@ -76,6 +76,10 @@ export function activate(context: vscode.ExtensionContext) {
         // Tab switch — cursor position hasn't changed so tree is still valid.
         debouncedCursorChange(editor);
       }
+    }),
+
+    vscode.workspace.onDidCloseTextDocument((document) => {
+      highlighter.invalidateBlockTree(document.uri.toString());
     }),
   );
 }
