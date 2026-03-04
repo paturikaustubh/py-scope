@@ -5,6 +5,7 @@ import { ChangeColorCommand } from "./commands/ChangeColorCommand";
 import { ChangeOpacityCommand } from "./commands/ChangeOpacityCommand";
 import { SelectBlockCommand } from "./commands/SelectBlockCommand";
 import { UndoBlockSelectionCommand } from "./commands/UndoBlockSelectionCommand";
+import { ToggleSettingCommand } from "./commands/ToggleSettingCommand";
 
 // Module-level so `deactivate()` can reach it without closing over a stale ref.
 let highlighter: Highlighter;
@@ -20,6 +21,22 @@ export function activate(context: vscode.ExtensionContext) {
     new ChangeOpacityCommand(highlighter),
     new SelectBlockCommand(highlighter),
     new UndoBlockSelectionCommand(highlighter),
+    new ToggleSettingCommand(
+      "showFirstLineHighlight",
+      "pyScope.toggleFirstLineHighlight",
+    ),
+    new ToggleSettingCommand(
+      "showFirstLineBorder",
+      "pyScope.toggleFirstLineBorder",
+    ),
+    new ToggleSettingCommand(
+      "showLastLineHighlight",
+      "pyScope.toggleLastLineHighlight",
+    ),
+    new ToggleSettingCommand(
+      "showLastLineBorder",
+      "pyScope.toggleLastLineBorder",
+    ),
   ];
   commands.forEach((cmd) => context.subscriptions.push(cmd.register()));
 

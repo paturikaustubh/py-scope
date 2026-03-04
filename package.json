@@ -53,6 +53,26 @@
           "minimum": 0.01,
           "maximum": 1,
           "description": "Opacity for first and last line highlight (0 < opacity ≤ 1)."
+        },
+        "pyScope.showFirstLineHighlight": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to highlight the first line (header) with increased opacity."
+        },
+        "pyScope.showFirstLineBorder": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to show a bottom border on the first line (header)."
+        },
+        "pyScope.showLastLineHighlight": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to highlight the last line with increased opacity."
+        },
+        "pyScope.showLastLineBorder": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to show a top border on the last line."
         }
       }
     },
@@ -75,6 +95,26 @@
       {
         "command": "pyScope.undoBlockSelection",
         "title": "Undo Block Selection",
+        "category": "PyScope"
+      },
+      {
+        "command": "pyScope.toggleFirstLineHighlight",
+        "title": "Toggle First Line Highlight",
+        "category": "PyScope"
+      },
+      {
+        "command": "pyScope.toggleFirstLineBorder",
+        "title": "Toggle First Line Border",
+        "category": "PyScope"
+      },
+      {
+        "command": "pyScope.toggleLastLineHighlight",
+        "title": "Toggle Last Line Highlight",
+        "category": "PyScope"
+      },
+      {
+        "command": "pyScope.toggleLastLineBorder",
+        "title": "Toggle Last Line Border",
         "category": "PyScope"
       }
     ],

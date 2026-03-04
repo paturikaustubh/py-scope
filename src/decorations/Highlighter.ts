@@ -1,12 +1,6 @@
 import * as vscode from "vscode";
 import { parsePythonBlocks } from "../parsers/pythonParser";
-import {
-  createBlockHighlight,
-  createFirstLastLineHighlight,
-  createFirstLineHighlight,
-  createLastLineHighlight,
-  createSingleLineBlockHighlight,
-} from "./styles";
+import { createHighlight } from "./styles";
 import { CONFIG_SECTION, DEFAULTS } from "../constants";
 import { selectionStack } from "../utils/selectionStack";
 import { BlockTree, CodeBlockNode } from "../utils/BlockTree";
@@ -84,12 +78,51 @@ export class Highlighter {
       );
     }
 
+    let showFirstLineHighlight = config.get<boolean>(
+      "showFirstLineHighlight",
+      DEFAULTS.showFirstLineHighlight,
+    );
+    let showFirstLineBorder = config.get<boolean>(
+      "showFirstLineBorder",
+      DEFAULTS.showFirstLineBorder,
+    );
+    let showLastLineHighlight = config.get<boolean>(
+      "showLastLineHighlight",
+      DEFAULTS.showLastLineHighlight,
+    );
+    let showLastLineBorder = config.get<boolean>(
+      "showLastLineBorder",
+      DEFAULTS.showLastLineBorder,
+    );
+
+    const firstOpacity = showFirstLineHighlight
+      ? firstLastOpacity
+      : blockOpacity;
+    const lastOpacity = showLastLineHighlight ? firstLastOpacity : blockOpacity;
+
+    const firstBorderWidth = showFirstLineBorder ? "0 0 1px 0" : undefined;
+    const lastBorderWidth = showLastLineBorder ? "1px 0 0 0" : undefined;
+
+    const singleLineBorderWidth = `${showLastLineBorder ? "1px" : "0"} 0 ${showFirstLineBorder ? "1px" : "0"} 0`;
+    const singleBorder =
+      showFirstLineBorder || showLastLineBorder
+        ? singleLineBorderWidth
+        : undefined;
+    const singleOpacity =
+      showFirstLineHighlight || showLastLineHighlight
+        ? firstLastOpacity
+        : blockOpacity;
+
     return {
-      block: createBlockHighlight(color, blockOpacity),
-      firstLine: createFirstLineHighlight(color, firstLastOpacity),
-      firstLastLine: createFirstLastLineHighlight(color, firstLastOpacity),
-      lastLine: createLastLineHighlight(color, firstLastOpacity),
-      singleLineBlock: createSingleLineBlockHighlight(color, firstLastOpacity),
+      block: createHighlight(color, blockOpacity),
+      firstLine: createHighlight(color, firstOpacity),
+      firstLastLine: createHighlight(color, firstOpacity, firstBorderWidth),
+      lastLine: createHighlight(color, lastOpacity, lastBorderWidth),
+      singleLineBlock: createHighlight(
+        color,
+        singleOpacity,
+        singleBorder === "0 0 0 0" ? undefined : singleBorder,
+      ),
     };
   }
 

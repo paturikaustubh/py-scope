@@ -6,4 +6,8 @@ export const DEFAULTS = {
   color: "27, 153, 5",
   blockOpacity: 0.08,
   firstLastOpacity: 0.2,
+  showFirstLineHighlight: true,
+  showFirstLineBorder: true,
+  showLastLineHighlight: true,
+  showLastLineBorder: true,
 } as const;
