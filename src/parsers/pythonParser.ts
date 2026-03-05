@@ -53,23 +53,14 @@ const BLOCK_KEYWORDS = [
 
 // ─── Header detection ─────────────────────────────────────────────────────────
 
-/**
- * Given a `startLine` that begins with a block keyword, scans forward until it
- * finds the closing `:` of the header (handling multi-line signatures with
- * open parentheses/brackets).
- *
- * Returns `undefined` when the candidate turns out to be a false positive —
- * e.g. a dangling `if x:` at the bottom of the file with nothing indented below.
- */
 function tryGetBlockHeader(
   document: vscode.TextDocument,
   startLine: number,
 ): { startLine: number; colonLine: number; colonPosition: number } | undefined {
   const firstLineText = document.lineAt(startLine).text;
-  // Strip inline comments before checking the keyword — avoids matching
-  // something like `# if x:` as a block header.
-  const firstLineCodePart = firstLineText.split(/#.*/)[0].trim();
 
+  // Quick keyword check
+  const firstLineCodePart = firstLineText.split(/#.*/)[0].trim();
   const isKeyword = BLOCK_KEYWORDS.some((keyword) =>
     new RegExp(`^${keyword}\\b`).test(firstLineCodePart),
   );
@@ -77,83 +68,106 @@ function tryGetBlockHeader(
     return undefined;
   }
 
-  // Track open parens/brackets so we can correctly handle multi-line signatures:
-  //   def foo(
-  //     bar,      ← still inside the paren, not the end of the header
-  //     baz,
-  //   ):          ← paren closed AND ends with ':', this is the real header end
   let parenLevel = 0;
   let lineNum = startLine;
 
   while (lineNum < document.lineCount) {
-    const line = document.lineAt(lineNum);
-    const codePart = line.text.split(/#.*/)[0];
-    const trimmed = codePart.trim();
+    const lineText = document.lineAt(lineNum).text;
 
-    // ── Inline single-line block: `if cond: body` all on one line ───────────────
-    // Only relevant on the very first line — inline blocks can't span multiple lines.
-    // We scan for a `:` at paren-depth 0 with non-comment, non-empty content after
-    // it. If found, the body lives on the same line as the header, so we return
-    // immediately without needing the "next line must be indented" guard.
-    if (lineNum === startLine) {
-      let depth = 0;
-      for (let i = 0; i < codePart.length; i++) {
-        const ch = codePart[i];
-        if ("([{".includes(ch)) {
-          depth++;
-        } else if (")]}".includes(ch)) {
-          depth--;
-        } else if (ch === ":" && depth === 0) {
-          const afterColon = codePart.slice(i + 1).trim();
-          if (afterColon && !afterColon.startsWith("#")) {
-            // Real body exists on this line — it's a valid inline block.
-            return { startLine, colonLine: startLine, colonPosition: i + 1 };
+    let state: "NORMAL" | "S_QUOTE" | "D_QUOTE" = "NORMAL";
+    let colonPos = -1;
+    let localParenLevel = parenLevel;
+
+    for (let i = 0; i < lineText.length; i++) {
+      const c = lineText[i];
+      if (state === "NORMAL") {
+        if (c === "#") {
+          break; // Rest is comment
+        } else if (c === '"') {
+          state = "D_QUOTE";
+        } else if (c === "'") {
+          state = "S_QUOTE";
+        } else if ("([{".includes(c)) {
+          localParenLevel++;
+        } else if (")]}".includes(c)) {
+          localParenLevel--;
+        } else if (c === ":") {
+          if (localParenLevel === 0) {
+            colonPos = i;
           }
-          // Nothing after the colon (e.g. `if x:`) — fall through to the
-          // normal multi-line header logic below.
-          break;
+        }
+      } else if (state === "S_QUOTE") {
+        if (c === "\\") {
+          i++; // Skip next
+        } else if (c === "'") {
+          state = "NORMAL";
+        }
+      } else if (state === "D_QUOTE") {
+        if (c === "\\") {
+          i++;
+        } else if (c === '"') {
+          state = "NORMAL";
         }
       }
     }
 
-    for (const ch of codePart) {
-      if ("([{".includes(ch)) {
-        parenLevel++;
-      } else if (")]}".includes(ch)) {
-        parenLevel--;
+    parenLevel = localParenLevel;
+
+    // Check inline single-line block (only on first line)
+    // e.g. `if True: pass`
+    if (lineNum === startLine && colonPos !== -1) {
+      let hasBody = false;
+      for (let j = colonPos + 1; j < lineText.length; j++) {
+        if (lineText[j] === "#") {
+          break;
+        }
+        if (lineText[j] !== " " && lineText[j] !== "\t") {
+          hasBody = true;
+          break;
+        }
+      }
+
+      if (hasBody) {
+        return { startLine, colonLine: startLine, colonPosition: colonPos + 1 };
       }
     }
 
-    // A line ending with `:` at paren depth 0 is the header's closing line.
-    if (trimmed.endsWith(":") && parenLevel === 0) {
-      const colonPos = line.text.lastIndexOf(":") + 1;
-
-      // Guard against false positives: a bare `if x:` followed immediately by
-      // something at the same or lower indentation (or nothing at all) is NOT
-      // a real block. We skip any blank lines before checking — empty lines
-      // between the header and the body are perfectly valid Python style.
-      let peekLine = lineNum + 1;
-      while (
-        peekLine < document.lineCount &&
-        document.lineAt(peekLine).isEmptyOrWhitespace
-      ) {
-        peekLine++;
-      }
-      const nextNonEmptyLine =
-        peekLine < document.lineCount ? document.lineAt(peekLine) : null;
-
-      if (
-        !nextNonEmptyLine ||
-        nextNonEmptyLine.firstNonWhitespaceCharacterIndex <=
-          line.firstNonWhitespaceCharacterIndex
-      ) {
-        return undefined;
+    // Multi-line block detection. If colonPos is the last meaningful character.
+    if (colonPos !== -1 && parenLevel === 0) {
+      let hasBody = false;
+      for (let j = colonPos + 1; j < lineText.length; j++) {
+        if (lineText[j] === "#") {
+          break;
+        }
+        if (lineText[j] !== " " && lineText[j] !== "\t") {
+          hasBody = true;
+          break;
+        }
       }
 
-      return { startLine, colonLine: lineNum, colonPosition: colonPos };
+      if (!hasBody) {
+        let peekLine = lineNum + 1;
+        while (
+          peekLine < document.lineCount &&
+          document.lineAt(peekLine).isEmptyOrWhitespace
+        ) {
+          peekLine++;
+        }
+        const nextNonEmptyLine =
+          peekLine < document.lineCount ? document.lineAt(peekLine) : null;
+
+        if (
+          !nextNonEmptyLine ||
+          nextNonEmptyLine.firstNonWhitespaceCharacterIndex <=
+            document.lineAt(startLine).firstNonWhitespaceCharacterIndex
+        ) {
+          return undefined; // Not actually a block (no indented body)
+        }
+
+        return { startLine, colonLine: lineNum, colonPosition: colonPos + 1 };
+      }
     }
 
-    // Safety valve — 20 lines is way more than any realistic signature needs.
     if (lineNum > startLine + 20) {
       return undefined;
     }
@@ -234,45 +248,80 @@ function createBlock(
 
 // ─── Triple-quote pre-pass ────────────────────────────────────────────────────
 
-/**
- * Returns the number of triple-quote tokens (`"""` or `'''`) on a single line.
- * Used to track whether we've entered or exited a multi-line string.
- */
-function countTripleQuotes(text: string): number {
-  let count = 0;
-  const tripleDouble = text.match(/"""/g);
-  if (tripleDouble) {
-    count += tripleDouble.length;
-  }
-  const tripleSingle = text.match(/'''/g);
-  if (tripleSingle) {
-    count += tripleSingle.length;
-  }
-  return count;
-}
-
-/**
- * Pre-computes a boolean array where `inStringArr[i]` is `true` if line `i`
- * is *inside* a triple-quoted string (docstring or otherwise).
- *
- * Why bother? Docstrings can contain Python keywords:
- *   def foo():
- *     """
- *     if this were parsed literally:
- *         we'd think there's an 'if' block here ← wrong!
- *     """
- * By computing this upfront we can skip those lines entirely during parsing.
- */
 function computeInStringArray(document: vscode.TextDocument): boolean[] {
-  const inStringArr: boolean[] = [];
-  let inString = false;
+  const inStringArr: boolean[] = new Array(document.lineCount).fill(false);
+  const text = document.getText();
 
-  for (let i = 0; i < document.lineCount; i++) {
-    inStringArr.push(inString);
-    // An odd number of triple-quote tokens on this line toggles the state.
-    const count = countTripleQuotes(document.lineAt(i).text);
-    if (count % 2 === 1) {
-      inString = !inString;
+  let state:
+    | "NORMAL"
+    | "S_QUOTE"
+    | "D_QUOTE"
+    | "COMMENT"
+    | "TRIPLE_S"
+    | "TRIPLE_D" = "NORMAL";
+  let lineIndex = 0;
+
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+
+    if (state === "TRIPLE_S" || state === "TRIPLE_D") {
+      inStringArr[lineIndex] = true;
+    }
+
+    if (c === "\n") {
+      if (state === "COMMENT" || state === "S_QUOTE" || state === "D_QUOTE") {
+        state = "NORMAL";
+      }
+      lineIndex++;
+      continue;
+    }
+
+    if (state === "NORMAL") {
+      if (c === "#") {
+        state = "COMMENT";
+      } else if (c === '"') {
+        if (text[i + 1] === '"' && text[i + 2] === '"') {
+          state = "TRIPLE_D";
+          inStringArr[lineIndex] = true;
+          i += 2;
+        } else {
+          state = "D_QUOTE";
+        }
+      } else if (c === "'") {
+        if (text[i + 1] === "'" && text[i + 2] === "'") {
+          state = "TRIPLE_S";
+          inStringArr[lineIndex] = true;
+          i += 2;
+        } else {
+          state = "S_QUOTE";
+        }
+      }
+    } else if (state === "S_QUOTE") {
+      if (c === "\\") {
+        i++;
+      } else if (c === "'") {
+        state = "NORMAL";
+      }
+    } else if (state === "D_QUOTE") {
+      if (c === "\\") {
+        i++;
+      } else if (c === '"') {
+        state = "NORMAL";
+      }
+    } else if (state === "TRIPLE_S") {
+      if (c === "\\") {
+        i++;
+      } else if (c === "'" && text[i + 1] === "'" && text[i + 2] === "'") {
+        state = "NORMAL";
+        i += 2;
+      }
+    } else if (state === "TRIPLE_D") {
+      if (c === "\\") {
+        i++;
+      } else if (c === '"' && text[i + 1] === '"' && text[i + 2] === '"') {
+        state = "NORMAL";
+        i += 2;
+      }
     }
   }
 
