@@ -40,6 +40,13 @@ export function activate(context: vscode.ExtensionContext) {
   ];
   commands.forEach((cmd) => context.subscriptions.push(cmd.register()));
 
+  // ── Initial paint ──────────────────────────────────────────────────────────
+  // Decorate the currently visible file immediately so the user sees
+  // highlights from the moment the extension finishes loading.
+  if (vscode.window.activeTextEditor) {
+    highlighter.updateDecorations(vscode.window.activeTextEditor);
+  }
+
   // ── Event handlers ──────────────────────────────────────────────────────────
 
   // Called when the document text actually changes — we need to discard the
@@ -90,8 +97,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     vscode.window.onDidChangeActiveTextEditor((editor) => {
       if (editor) {
-        // Tab switch — cursor position hasn't changed so tree is still valid.
-        debouncedCursorChange(editor);
+        // Tab switch — repaint synchronously so the correct file's blocks
+        // appear immediately. No debounce: tab switches are infrequent and
+        // the user needs instant visual feedback.
+        highlighter.updateDecorations(editor);
       }
     }),
 
