@@ -2,6 +2,19 @@
 
 ---
 
+## **v1.0.0** - _09 Mar 2026_
+
+**New Features**
+
+- Four new customization settings and toggles have been added to independently control the first/last line highlights and borders (`pyScope.showFirstLineHighlight`, `pyScope.showFirstLineBorder`, `pyScope.showLastLineHighlight`, `pyScope.showLastLineBorder`).
+
+**Bug Fixes & Stability**
+
+- **Ghost Blocks Fixed:** Advanced parsing logic added to handle string literals and docstrings, eliminating false code blocks triggered by keywords inside strings/comments.
+- **File Lifecycle Fix:** Fixed a cache staleness bug, so Python block highlights correctly persist and update when switching between multiple active tabs.
+
+---
+
 ## **v0.11.1** - _02 Mar 2026_
 
 **Updated**

@@ -1,5 +1,19 @@
 # Change Log
 
+## [1.0.0] - 09 Mar, 2026
+
+### Added
+
+- Added individual settings and commands (`Toggle First/Last Line Highlight`, `Toggle First/Last Line Border`) to control block decoration outlines.
+
+### Changed
+
+- Significantly enhanced `pythonParser.ts` string and docstring text parsing to be evaluated before structural block logic to avoid false positives.
+
+### Fixed
+
+- Cache staleness bug the caused highlights to jump into incorrect active documents randomly. (File lifecycle tracking with URI-based map).
+
 ## [0.11.1] - 02 Mar, 2026
 
 ### Updated

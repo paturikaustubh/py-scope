@@ -5,6 +5,7 @@ import { ChangeColorCommand } from "./commands/ChangeColorCommand";
 import { ChangeOpacityCommand } from "./commands/ChangeOpacityCommand";
 import { SelectBlockCommand } from "./commands/SelectBlockCommand";
 import { UndoBlockSelectionCommand } from "./commands/UndoBlockSelectionCommand";
+import { ToggleSettingCommand } from "./commands/ToggleSettingCommand";
 
 // Module-level so `deactivate()` can reach it without closing over a stale ref.
 let highlighter: Highlighter;
@@ -20,15 +21,37 @@ export function activate(context: vscode.ExtensionContext) {
     new ChangeOpacityCommand(highlighter),
     new SelectBlockCommand(highlighter),
     new UndoBlockSelectionCommand(highlighter),
+    new ToggleSettingCommand(
+      "showFirstLineHighlight",
+      "pyScope.toggleFirstLineHighlight",
+    ),
+    new ToggleSettingCommand(
+      "showFirstLineBorder",
+      "pyScope.toggleFirstLineBorder",
+    ),
+    new ToggleSettingCommand(
+      "showLastLineHighlight",
+      "pyScope.toggleLastLineHighlight",
+    ),
+    new ToggleSettingCommand(
+      "showLastLineBorder",
+      "pyScope.toggleLastLineBorder",
+    ),
   ];
   commands.forEach((cmd) => context.subscriptions.push(cmd.register()));
+
+  // ── Initial paint ──────────────────────────────────────────────────────────
+  // Decorate the currently visible file immediately so the user sees
+  // highlights from the moment the extension finishes loading.
+  if (vscode.window.activeTextEditor) {
+    highlighter.updateDecorations(vscode.window.activeTextEditor);
+  }
 
   // ── Event handlers ──────────────────────────────────────────────────────────
 
   // Called when the document text actually changes — we need to discard the
   // cached block tree because the line structure may have shifted.
   const onDocumentChange = (editor: vscode.TextEditor) => {
-    highlighter.invalidateBlockTree();
     highlighter.updateDecorations(editor);
   };
 
@@ -43,6 +66,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeTextDocument((e) => {
+      highlighter.invalidateBlockTree(e.document.uri.toString());
       const editor = vscode.window.activeTextEditor;
       if (!editor || e.document !== editor.document) {
         return;
@@ -73,9 +97,15 @@ export function activate(context: vscode.ExtensionContext) {
 
     vscode.window.onDidChangeActiveTextEditor((editor) => {
       if (editor) {
-        // Tab switch — cursor position hasn't changed so tree is still valid.
-        debouncedCursorChange(editor);
+        // Tab switch — repaint synchronously so the correct file's blocks
+        // appear immediately. No debounce: tab switches are infrequent and
+        // the user needs instant visual feedback.
+        highlighter.updateDecorations(editor);
       }
+    }),
+
+    vscode.workspace.onDidCloseTextDocument((document) => {
+      highlighter.invalidateBlockTree(document.uri.toString());
     }),
   );
 }

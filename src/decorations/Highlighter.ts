@@ -1,12 +1,6 @@
 import * as vscode from "vscode";
 import { parsePythonBlocks } from "../parsers/pythonParser";
-import {
-  createBlockHighlight,
-  createFirstLastLineHighlight,
-  createFirstLineHighlight,
-  createLastLineHighlight,
-  createSingleLineBlockHighlight,
-} from "./styles";
+import { createHighlight } from "./styles";
 import { CONFIG_SECTION, DEFAULTS } from "../constants";
 import { selectionStack } from "../utils/selectionStack";
 import { BlockTree, CodeBlockNode } from "../utils/BlockTree";
@@ -29,13 +23,17 @@ export class Highlighter {
 
   // Tracks the start/end of the block that was highlighted last render cycle.
   // Used as a cheap "did anything change?" guard to skip redundant repaints.
-  private currentBlockData?: { firstLine: number; lastLine: number };
+  private currentBlockData?: {
+    uri: string;
+    firstLine: number;
+    lastLine: number;
+  };
 
   private disposables: vscode.Disposable[] = [];
 
-  // Cached parse result — invalidated whenever the document content changes.
+  // Cached parse result per document URI — invalidated whenever the document content changes.
   // Cursor movement alone does NOT require a re-parse, so we hold onto this.
-  private blockTree: BlockTree | undefined;
+  private blockTrees = new Map<string, BlockTree>();
 
   // ── Selection state ─────────────────────────────────────────────────────────
   // Exposed as `public` so SelectBlockCommand / UndoBlockSelectionCommand can
@@ -54,9 +52,17 @@ export class Highlighter {
   /** Reads current config and builds all five decoration types. */
   private createDecorations() {
     const config = vscode.workspace.getConfiguration(CONFIG_SECTION);
-    let color = config.get<string>("blockHighlightColor", DEFAULTS.color) || DEFAULTS.color;
-    let blockOpacity = config.get<number>("blockHighlightOpacity", DEFAULTS.blockOpacity);
-    let firstLastOpacity = config.get<number>("firstLastLineOpacity", DEFAULTS.firstLastOpacity);
+    let color =
+      config.get<string>("blockHighlightColor", DEFAULTS.color) ||
+      DEFAULTS.color;
+    let blockOpacity = config.get<number>(
+      "blockHighlightOpacity",
+      DEFAULTS.blockOpacity,
+    );
+    let firstLastOpacity = config.get<number>(
+      "firstLastLineOpacity",
+      DEFAULTS.firstLastOpacity,
+    );
 
     // Clamp bad values with a warning rather than silently breaking the UI.
     if (blockOpacity <= 0 || blockOpacity > 1) {
@@ -72,12 +78,51 @@ export class Highlighter {
       );
     }
 
+    let showFirstLineHighlight = config.get<boolean>(
+      "showFirstLineHighlight",
+      DEFAULTS.showFirstLineHighlight,
+    );
+    let showFirstLineBorder = config.get<boolean>(
+      "showFirstLineBorder",
+      DEFAULTS.showFirstLineBorder,
+    );
+    let showLastLineHighlight = config.get<boolean>(
+      "showLastLineHighlight",
+      DEFAULTS.showLastLineHighlight,
+    );
+    let showLastLineBorder = config.get<boolean>(
+      "showLastLineBorder",
+      DEFAULTS.showLastLineBorder,
+    );
+
+    const firstOpacity = showFirstLineHighlight
+      ? firstLastOpacity
+      : blockOpacity;
+    const lastOpacity = showLastLineHighlight ? firstLastOpacity : blockOpacity;
+
+    const firstBorderWidth = showFirstLineBorder ? "0 0 1px 0" : undefined;
+    const lastBorderWidth = showLastLineBorder ? "1px 0 0 0" : undefined;
+
+    const singleLineBorderWidth = `${showLastLineBorder ? "1px" : "0"} 0 ${showFirstLineBorder ? "1px" : "0"} 0`;
+    const singleBorder =
+      showFirstLineBorder || showLastLineBorder
+        ? singleLineBorderWidth
+        : undefined;
+    const singleOpacity =
+      showFirstLineHighlight || showLastLineHighlight
+        ? firstLastOpacity
+        : blockOpacity;
+
     return {
-      block: createBlockHighlight(color, blockOpacity),
-      firstLine: createFirstLineHighlight(color, firstLastOpacity),
-      firstLastLine: createFirstLastLineHighlight(color, firstLastOpacity),
-      lastLine: createLastLineHighlight(color, firstLastOpacity),
-      singleLineBlock: createSingleLineBlockHighlight(color, firstLastOpacity),
+      block: createHighlight(color, blockOpacity),
+      firstLine: createHighlight(color, firstOpacity),
+      firstLastLine: createHighlight(color, firstOpacity, firstBorderWidth),
+      lastLine: createHighlight(color, lastOpacity, lastBorderWidth),
+      singleLineBlock: createHighlight(
+        color,
+        singleOpacity,
+        singleBorder === "0 0 0 0" ? undefined : singleBorder,
+      ),
     };
   }
 
@@ -125,17 +170,22 @@ export class Highlighter {
     }
   }
 
-  /** Marks the cached block tree as stale. Called whenever document text changes. */
-  public invalidateBlockTree() {
-    this.blockTree = undefined;
+  /** Marks the cached block tree as stale for the given URI, or all if none provided. */
+  public invalidateBlockTree(uri?: string) {
+    if (uri) {
+      this.blockTrees.delete(uri);
+    } else {
+      this.blockTrees.clear();
+    }
   }
 
   /** Returns the cached tree, or parses the document fresh if the cache is cold. */
   private getBlockTree(document: vscode.TextDocument): BlockTree {
-    if (!this.blockTree) {
-      this.blockTree = new BlockTree(parsePythonBlocks(document));
+    const key = document.uri.toString();
+    if (!this.blockTrees.has(key)) {
+      this.blockTrees.set(key, new BlockTree(parsePythonBlocks(document)));
     }
-    return this.blockTree;
+    return this.blockTrees.get(key)!;
   }
 
   /**
@@ -167,13 +217,19 @@ export class Highlighter {
     const newStart = activeNode?.block.openRange.start.line;
     const newEnd = activeNode?.block.closeRange.end.line;
 
+    const uri = editor.document.uri.toString();
+
     // Short-circuit: cursor is still inside the same block, nothing to redraw.
-    if (newStart === this.currentBlockData?.firstLine && newEnd === this.currentBlockData?.lastLine) {
+    if (
+      this.currentBlockData?.uri === uri &&
+      newStart === this.currentBlockData?.firstLine &&
+      newEnd === this.currentBlockData?.lastLine
+    ) {
       return;
     }
 
     if (!activeNode) {
-      if (this.currentBlockData) {
+      if (this.currentBlockData?.uri === uri || this.currentBlockData) {
         this.clearAllDecorations(editor);
         this.currentBlockData = undefined;
       }
@@ -210,9 +266,15 @@ export class Highlighter {
       const { openRange, closeRange, headerEndLine } = activeNode.block;
       const blockEndLine = closeRange.end.line;
 
-      this.highlightRange(editor, openRange.start.line, headerEndLine, blockEndLine);
+      this.highlightRange(
+        editor,
+        openRange.start.line,
+        headerEndLine,
+        blockEndLine,
+      );
 
       this.currentBlockData = {
+        uri: editor.document.uri.toString(),
         firstLine: openRange.start.line,
         lastLine: blockEndLine,
       };
@@ -261,7 +323,12 @@ export class Highlighter {
     // ── Body (lines between the header and the last line) ─────────────────────
     if (headerEnd + 1 <= blockEnd - 1) {
       editor.setDecorations(this.decorations.block, [
-        new vscode.Range(headerEnd + 1, 0, blockEnd - 1, Number.MAX_SAFE_INTEGER),
+        new vscode.Range(
+          headerEnd + 1,
+          0,
+          blockEnd - 1,
+          Number.MAX_SAFE_INTEGER,
+        ),
       ]);
     } else {
       editor.setDecorations(this.decorations.block, []);
@@ -273,7 +340,12 @@ export class Highlighter {
     if (headerStart < headerEnd) {
       // Case C: multi-line header — shade the lines before the colon line
       editor.setDecorations(this.decorations.firstLine, [
-        new vscode.Range(headerStart, 0, headerEnd - 1, Number.MAX_SAFE_INTEGER),
+        new vscode.Range(
+          headerStart,
+          0,
+          headerEnd - 1,
+          Number.MAX_SAFE_INTEGER,
+        ),
       ]);
     } else {
       // Case B: single-line header — firstLine decoration not needed
